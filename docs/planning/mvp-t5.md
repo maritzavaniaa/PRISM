@@ -8,8 +8,8 @@
 **Catatan:**
 - MVP hanya mengerjakan **T5** (PII di berkas repositori).
 - T3 (PII di log keluaran tes) dikerjakan **setelah** MVP selesai.
-- Data yang dicari: NIK, NPWP, nomor HP, email.
-  - Keempatnya termasuk data pribadi umum butir f Pasal 4 ayat (3): "dikombinasikan untuk mengidentifikasi seseorang" ⚠️ (interpretasi, cocokkan dengan teks UU).
+- Data yang dicari: **NIK (termasuk NPWP orang pribadi dan nomor KK), nomor HP, dan email.** Jenis lain diparkir (keputusan 12 Nov. 2026).
+  - Dasar: Pasal 4 ayat (3) huruf f UU PDP, "dikombinasikan untuk mengidentifikasi seseorang". **Hanya nomor HP yang disebut di teks** (Penjelasan: "antara lain nomor telepon seluler dan IP Address"). NIK (termasuk NPWP orang pribadi dan KK) dan email adalah **tafsiran** berdasarkan Pasal 1 butir 1. Rincian di [dasar-hukum-uu-pdp.md](../research/dasar-hukum-uu-pdp.md).
   - **Belum dicakup:** data umum butir a–e (nama lengkap, jenis kelamin, kewarganegaraan, agama, status perkawinan) dan data pribadi spesifik. Data umum a–e direncanakan sebagai tahap 2 setelah MVP.
 - Secret dan token tidak dicakup.
 - ⚠️ = belum diverifikasi atau belum diuji.
@@ -19,7 +19,7 @@
 ## 1. Tujuan dan batas MVP
 
 **MVP selesai bila:**
-1. Perintah `prism scan <folder>` mendeteksi NIK, NPWP, HP, dan email di berkas teks.
+1. Perintah `prism scan <folder>` mendeteksi NIK (termasuk NPWP orang pribadi dan KK), HP, dan email di berkas teks.
 2. Nilai PII tidak pernah tampil utuh di laporan (4 karakter terakhir saja).
 3. Exit code benar: 0 bersih, 1 ada temuan, 2 error pindai.
 4. Workflow GitHub Actions jalan saat push dan pull request. Job merah bila ada temuan, hijau bila bersih. Ada tangkapan layar sebagai bukti.
@@ -32,8 +32,8 @@
 | Bagian | Isi |
 |---|---|
 | Sumber | Berkas teks di working tree hasil checkout |
-| Jenis data | NIK, NPWP, HP, email |
-| Penilaian | Regex, validasi, kata konteks, skor, ambang |
+| Jenis data | NIK (termasuk NPWP orang pribadi dan KK), HP, email |
+| Penilaian | Regex, pemeriksaan bukti, kata konteks, tingkat keyakinan (`high`, `medium`, `low`), ambang tingkat |
 | Keluaran | Teks di log job (dibaca manusia), JSON sebagai artifact terpisah (dibaca program), exit code. Contoh ada di bagian 6, setelah langkah 9 |
 | CI | Satu workflow (push dan pull request) |
 | Evaluasi | Precision, recall, FPR, waktu pada data sintetis |
@@ -47,7 +47,11 @@
 | Secret, token, kredensial | Di luar cakupan |
 | Severity | Batasan |
 | Pengecualian per temuan (`prism:allow`, allow list) dan konfigurasi (FR-07, FR-08) | Setelah MVP |
-| Nomor kartu kredit | Belum diputuskan |
+| Kartu kredit dan debit | **Diparkir** (12 Nov. 2026). Formatnya sudah diriset di `format-pii-parkir.md` bagian P2 dan tinggal diputuskan tingkat buktinya. Kredit disebut eksplisit di UU PDP, debit lewat tafsiran |
+| NPWP 15 digit (format lama, orang pribadi) | **Diparkir** (12 Nov. 2026). Struktur segmen belum bersumber resmi. NPWP 16 digit orang pribadi sama dengan NIK dan sudah tercakup |
+| Nomor rekening, virtual account, paspor, NIP, BPJS, SIM | **Diparkir.** Belum diriset (`format-pii-parkir.md` bagian P3) |
+| IP Address | **Tidak dikerjakan dulu** (keputusan 11 Nov. 2026). Disebut eksplisit di Penjelasan Pasal 4 ayat (3) huruf f UU PDP, tetapi risiko temuan palsu tinggi |
+| Rule terpisah untuk nomor Kartu Keluarga (KK) | Tidak. KK terdeteksi sebagai `nik` |
 | Data umum butir a–e (nama lengkap, jenis kelamin, kewarganegaraan, agama, status perkawinan) | Tahap 2, setelah MVP |
 | NER, Presidio atau Betterleaks sebagai dependensi | Tidak dipakai. Keduanya hanya pembanding |
 | Package atau GitHub Action yang bisa dipakai ulang | Setelah MVP |
@@ -68,13 +72,13 @@ flowchart TD
     subgraph SCAN["Di dalam prism scan"]
         E["Telusuri berkas<br/>lewati .git, biner, file besar,<br/>folder yang dikecualikan"]
         F{"Baris punya ≥ 8 digit<br/>(boleh dipisah spasi, titik, strip)<br/>atau tanda @?"}
-        G["Regex tiap rule<br/>NIK, NPWP, HP, email"]
-        H["Validasi<br/>True: skor 1,0<br/>False: dibuang<br/>None: skor tetap"]
-        I["Konteks<br/>kata petunjuk menaikkan skor"]
-        J{"Skor sama atau di atas ambang?"}
+        G["Regex tiap rule<br/>NIK, HP, email"]
+        H["Pemeriksaan bukti<br/>tiap rule memberi tingkat:<br/>high, medium, atau low"]
+        I["Konteks<br/>kata petunjuk menaikkan satu tingkat"]
+        J{"Tingkat sama atau di atas<br/>--min-level?"}
         K["Dedup temuan yang beririsan,<br/>simpan temuan"]
         SKIP["Lewati baris"]
-        DROP["Buang kandidat"]
+        DROP["Buang kandidat<br/>(yang low dihitung di ringkasan)"]
         L["Semua berkas selesai"]
         E --> F
         F -->|"tidak"| SKIP --> L
@@ -114,21 +118,24 @@ flowchart TD
 
 DFD ini penyederhanaan dari DFD riset utama (bagian 5.2). Hanya elemen yang berkaitan dengan T5 yang digambar. Batas kepercayaan sama: **A** mesin lokal, **B** platform GitHub, **C** runner. Garis putus-putus berarti opsional atau kondisional.
 
+**Cara membaca diagram:**
+- Alur bergerak dari **kiri ke kanan**: developer, mesin lokal, GitHub (sebelum job), runner, GitHub (hasil job), lalu pembaca hasil.
+- Batas B digambar **dua kali** dan E1 serta E2 digambar lebih dari sekali, supaya alur tidak berputar balik. Itu batas dan entitas yang sama.
+- Bagian "E1 (membaca hasil, lalu memperbaiki)" di kanan kembali ke alur 1 di kiri. Panah baliknya tidak digambar.
+
 ### 3.1 Sebelum ada PRISM
 
 ```mermaid
 flowchart LR
-    E1["E1 Developer"]
-    E2["E2 Pembaca repo dan log"]
+    E1["E1 Developer<br/>(menulis dan push)"]
 
     subgraph bA["Batas A: mesin lokal developer"]
         P1(("P1 Commit dan push"))
     end
 
-    subgraph bB["Batas B: platform GitHub"]
-        P2(("P2 Pemicu workflow"))
+    subgraph bB1["Batas B: platform GitHub (sebelum job)"]
         D1[("D1 Remote repository")]
-        D3[("D3 Log workflow dan status")]
+        P2(("P2 Pemicu workflow"))
     end
 
     subgraph bC["Batas C: runner"]
@@ -136,6 +143,14 @@ flowchart LR
         P4(("P4 Eksekusi step: build atau tes"))
         P5(("P5 Selesaikan job"))
     end
+
+    subgraph bB2["Batas B: platform GitHub (hasil job)"]
+        D3[("D3 Log workflow dan status")]
+    end
+
+    E1b["E1 Developer<br/>(membaca hasil)"]
+    E2a["E2 Pembaca repo"]
+    E2b["E2 Pembaca log"]
 
     E1 -->|"1 kode dan konfigurasi"| P1
     P1 -->|"2 push commit dan berkas (T5)"| D1
@@ -146,9 +161,9 @@ flowchart LR
     P4 -->|"7 output dan error"| D3
     P4 -->|"8 hasil step"| P5
     P5 -->|"9 status job"| D3
-    D3 -->|"10 lihat log dan status"| E1
-    D3 -->|"11 lihat log"| E2
-    D1 -.->|"12 lihat isi dan riwayat repo (dampak T5)"| E2
+    D3 -->|"10 lihat log dan status"| E1b
+    D3 -->|"11 lihat log"| E2b
+    D1 -.->|"12 lihat isi dan riwayat repo (dampak T5)"| E2a
 
     linkStyle 1 stroke:#d32f2f,stroke-width:4px;
 ```
@@ -164,9 +179,9 @@ flowchart LR
 | 7 | P4 ke D3 | Output dan error step | Jalur T3 (di luar MVP) |
 | 8 | P4 ke P5 | Hasil step | - |
 | 9 | P5 ke D3 | Status job | Job hijau walau berkas berisi PII |
-| 10 | D3 ke E1 | Log dan status | Developer tidak diberi tahu soal PII |
-| 11 | D3 ke E2 | Log | - |
-| 12 | D1 ke E2 | Isi dan riwayat repo | Dampak T5: pembaca repo melihat PII |
+| 10 | D3 ke E1 (membaca hasil) | Log dan status | Developer tidak diberi tahu soal PII |
+| 11 | D3 ke E2 (pembaca log) | Log | - |
+| 12 | D1 ke E2 (pembaca repo) | Isi dan riwayat repo | Dampak T5: pembaca repo melihat PII |
 
 **Kondisi sebelum PRISM:** PII di berkas ter-push, job tetap hijau, dan tidak ada yang memberi tahu developer.
 
@@ -176,19 +191,15 @@ Elemen baru: **P6** (PRISM pindai repo) dan **D5** (artifact laporan JSON). Elem
 
 ```mermaid
 flowchart LR
-    E1["E1 Developer"]
-    E2["E2 Pembaca repo dan log"]
-    E3["E3 Penyedia Action<br/>(checkout, setup-python, upload-artifact)"]
+    E1["E1 Developer<br/>(menulis dan push)"]
 
     subgraph bA["Batas A: mesin lokal developer"]
         P1(("P1 Commit dan push"))
     end
 
-    subgraph bB["Batas B: platform GitHub"]
-        P2(("P2 Pemicu workflow"))
+    subgraph bB1["Batas B: platform GitHub (sebelum job)"]
         D1[("D1 Remote repository<br/>termasuk kode PRISM dan YAML")]
-        D3[("D3 Log workflow dan status")]
-        D5[("D5 Artifact laporan JSON<br/>(opsional)")]
+        P2(("P2 Pemicu workflow"))
     end
 
     subgraph bC["Batas C: runner"]
@@ -198,23 +209,31 @@ flowchart LR
         P5(("P5 Selesaikan job"))
     end
 
+    subgraph bB2["Batas B: platform GitHub (hasil job)"]
+        D3[("D3 Log workflow dan status")]
+        D5[("D5 Artifact laporan JSON<br/>(opsional)")]
+    end
+
+    E1b["E1 Developer<br/>(membaca hasil, lalu memperbaiki)"]
+    E2a["E2 Pembaca repo"]
+    E2b["E2 Pembaca log dan artifact"]
+
     E1 -->|"1 kode dan konfigurasi"| P1
     P1 -->|"2 push commit dan berkas (T5)"| D1
     D1 -->|"3 event push atau PR"| P2
     P2 -->|"4 buat run, tugaskan job"| P3
     D1 -->|"5 ambil kode dan PRISM"| P3
     P3 -->|"6 berkas teks di workspace"| P6
+    P6 -->|"9 exit code 0, 1, 2"| P5
     P6 -->|"7 ringkasan temuan, nilai di-mask"| D3
     P6 -.->|"8 laporan JSON, nilai di-mask"| D5
-    P6 -->|"9 exit code 0, 1, 2"| P5
     P5 -->|"10 status job"| D3
-    D3 -->|"11 lihat hasil dan lokasi temuan"| E1
-    D5 -.->|"12 unduh laporan"| E1
-    D3 -->|"13 lihat log"| E2
-    D1 -.->|"14 lihat isi dan riwayat repo (dampak T5)"| E2
+    D3 -->|"11 lihat hasil dan lokasi temuan"| E1b
+    D5 -.->|"12 unduh laporan"| E1b
+    D3 -->|"13 lihat log"| E2b
+    D1 -.->|"14 lihat isi dan riwayat repo (dampak T5)"| E2a
     P3 -.->|"15 (T3 nanti)"| P4
     P4 -.->|"16 (T3 nanti)"| D3
-    E3 -.->|"17 kode Action"| P3
 
     linkStyle 1 stroke:#d32f2f,stroke-width:4px;
     linkStyle 5,6,7,8,11 stroke:#2e7d32,stroke-width:3px;
@@ -227,15 +246,15 @@ Garis merah tebal = alur T5. Garis hijau = alur baru karena PRISM.
 | 1 sampai 4 | Sama seperti sebelumnya | - | Tidak berubah |
 | 5 | D1 ke P3 | Kode repositori **dan kode PRISM** | Berubah: PRISM ikut diambil dari repo |
 | 6 | P3 ke P6 | Berkas teks di workspace | **Baru** |
-| 7 | P6 ke D3 | Ringkasan temuan: jenis, lokasi, nilai di-mask, skor | **Baru** |
+| 7 | P6 ke D3 | Ringkasan temuan: jenis, lokasi, nilai di-mask, tingkat keyakinan | **Baru** |
 | 8 | P6 ke D5 | Laporan JSON (di-mask) | **Baru**, opsional |
 | 9 | P6 ke P5 | Exit code 0, 1, atau 2 | **Baru.** Menentukan status job |
 | 10 | P5 ke D3 | Status job | Berubah: merah bila ada temuan atau error |
 | 11 | D3 ke E1 | Hasil dan lokasi temuan | Berubah: developer diberi tahu |
 | 12 | D5 ke E1 | Laporan JSON | **Baru**, opsional |
-| 13, 14 | D3 dan D1 ke E2 | Log, isi repo | Tidak berubah |
+| 13, 14 | D3 ke E2 (pembaca log), D1 ke E2 (pembaca repo) | Log, isi repo | Tidak berubah |
 | 15, 16 | P3 ke P4 ke D3 | Build/tes dan log | Ditunda untuk T3 |
-| 17 | E3 ke P3 | Kode Action pihak ketiga | Sama dengan DFD riset utama (alur 5a). Menambah Action baru (`setup-python`, `upload-artifact`) |
+| 17 | E3 ke P3 | Kode Action pihak ketiga | **Tidak digambar** supaya diagram tetap terbaca. Sama dengan DFD riset utama (alur 5a). Menambah Action baru (`setup-python`, `upload-artifact`) |
 
 ### 3.3 Perubahan dan efeknya pada T5
 
@@ -256,7 +275,7 @@ Garis merah tebal = alur T5. Garis hijau = alur baru karena PRISM.
 |---|---|
 | Laporan PRISM sendiri memuat PII utuh (di log atau artifact) | Nilai selalu di-mask 4 karakter terakhir. Tidak ada opsi menampilkan utuh |
 | Pindai gagal terbaca sebagai bersih | Exit code 2 terpisah dari 0 |
-| Action pihak ketiga (`setup-python`, `upload-artifact`) | Dicatat di DFD sebagai E3. Pin versi ⚠️ |
+| Action pihak ketiga (`setup-python`, `upload-artifact`) | Dicatat di tabel alur 17 (E3, tidak digambar). Pin versi ⚠️ |
 | Repo berisi data uji PII sintetis yang ikut terpindai | Folder uji dikecualikan di CI (langkah 12) |
 
 ---
@@ -267,22 +286,42 @@ Garis merah tebal = alur T5. Garis hijau = alur baru karena PRISM.
 |---|---|---|
 | Bahasa | Python, hanya library standar (`argparse`, `re`, `os`, `json`, `dataclasses`) | Ringan dan mudah dipasang di runner (K-09) |
 | Cara menjalankan | `PYTHONPATH=src python -m prism scan <folder>` | Paling sederhana untuk pemula. `pyproject.toml` ditunda |
-| Opsi CLI | `--min-score` (default 0,4 ⚠️), `--exclude <folder>` (boleh berulang), `--json`, `--output <berkas>` | Seperlunya |
-| Skor validasi | `True` jadi 1,0. `False` dibuang. `None` skor tetap | Sama dengan Presidio. Alasan di bawah |
-| Konteks | Kata petunjuk dicari di baris yang sama, ±40 karakter ⚠️. Skor baru = `max(skor + 0,35; 0,4)`, maksimal 1,0 | Sama dengan contoh dokumentasi Presidio (0,01 jadi 0,4) |
-| Prefilter baris | Lanjut bila jumlah karakter digit di baris ≥ 8 (walau dipisah spasi, titik, atau strip) atau ada `@` | HP (`0812-3456-7890`) dan NPWP bertitik tidak punya 8 digit berurutan, jadi syarat "berurutan" akan melewatkannya |
-| Dedup | Temuan beririsan: skor tertinggi, lalu terpanjang, lalu urutan rule (NIK sebelum NPWP) | Perlu untuk NPWP 16 digit yang sama dengan NIK |
+| Opsi CLI | `--min-level` (`low`, `medium`, `high`; default `medium`), `--exclude <folder>` (boleh berulang), `--json`, `--output <berkas>` | Seperlunya |
+| Tingkat keyakinan | Tiap rule memberi `high`, `medium`, atau `low` menurut bukti yang terpenuhi. **Tidak ada skor angka** | Skor angka butuh dasar kalibrasi dari data berlabel yang belum ada. Tingkat hanya mengurutkan bukti. Rincian NIK di bawah |
+| Konteks | Kata petunjuk dicari di baris yang sama, ±40 karakter ⚠️. Bila ada, tingkat naik satu (`low` jadi `medium`, `medium` jadi `high`) | **Hipotesis** tanpa dasar teori. Diuji di U5 ⚠️ |
+| Prefilter baris | Lanjut bila jumlah karakter digit di baris ≥ 8 (walau dipisah spasi, titik, atau strip) atau ada `@` | HP (`0812-3456-7890`) yang dipisah strip atau spasi tidak punya 8 digit berurutan, jadi syarat "berurutan" akan melewatkannya |
+| Dedup | Temuan beririsan: tingkat tertinggi, lalu terpanjang, lalu urutan rule (NIK lebih dulu) | Berjaga bila dua rule mencocokkan rentang yang sama |
 | Laporan | 4 karakter terakhir, sisanya `*`. Selalu aktif | NFR-04 |
 | Exit code | 2 jika ada error pindai (didahulukan). Jika tidak, 1 jika ada temuan. Jika tidak, 0 | Gagal pindai tidak boleh terlihat bersih. Keduanya tetap menggagalkan job |
 | Berkas dilewati | `.git`, biner (ekstensi umum atau ada byte nol), file di atas 1 MB ⚠️, folder `--exclude` | Sederhana dan cukup untuk repo kecil |
 | Python di CI | Samakan dengan lokal (3.13) | Hindari beda perilaku |
 
-**Mengapa validasi lolos langsung 1,0:**
-- Data di CSV biasanya punya kata `nik` di baris judul, bukan di baris nilai. Konteks per baris tidak menjangkaunya.
-- Bila NIK valid hanya dilaporkan dengan kata konteks, NIK di CSV terlewat.
-- Pilihan lain (valid tetap 0,3, naik hanya dengan konteks) diuji kemudian (uji U5 di implementasi.md bagian 8).
+**Tingkat keyakinan NIK:**
 
-**Catatan ketidaksesuaian di implementasi.md (bagian 6):** satu paragraf menyebut NIK yang lolos validasi tapi tanpa kata konteks berskor 0,3 dan tidak dilaporkan, sedangkan tabel langkah 4 menyebut `True` jadi 1,0. MVP memakai versi kedua. Dokumen itu sebaiknya disesuaikan nanti.
+Kandidat NIK adalah tepat 16 digit. Bukti yang diperiksa:
+- **Format:** digit 7–12 berbentuk tanggal dan bulan yang sah (hari 01–31 atau 41–71 untuk perempuan, bulan 01–12, jumlah hari sesuai bulan, 29 Februari diterima). Tahun dan nomor urut tidak dicek.
+- **Provinsi:** 2 digit pertama ada di `provinsi.csv` (38 kode).
+- **Kecamatan:** 6 digit pertama ada di `data/reference/kode-wilayah/kecamatan.csv` (7.285 kode).
+
+| Tingkat | Syarat | Peluang lolos kebetulan pada 16 digit acak ⚠️ |
+|---|---|---|
+| `high` | Format sah **dan** kecamatan terdaftar | ±0,053% |
+| `medium` | Format sah dan provinsi terdaftar, tetapi kecamatan tidak ditemukan | ±2,73% (dasar hitungan: `format-pii-indonesia.md` Lampiran B) |
+| `low` | Selainnya, termasuk hanya 16 digit acak | - |
+
+- `low` tidak dilaporkan pada ambang bawaan. Jumlahnya dicatat di ringkasan (`suppressed_low`), nilainya tidak dicetak.
+- Kata konteks (`nik`, `ktp`) menaikkan satu tingkat. Jadi 16 digit `low` dengan kata `nik` di baris yang sama menjadi `medium`.
+- Nomor urut (4 digit terakhir) tidak dicek. NIK berawalan `99` (WNI di luar negeri) belum ditangani dan akan jatuh ke `low`. Lihat [format-pii-parkir.md](../research/format-pii-parkir.md).
+- Nomor Kartu Keluarga (KK) tidak punya rule sendiri. Strukturnya mirip NIK, jadi KK akan dilaporkan sebagai `nik`. Lihat bagian 5 `format-pii-indonesia.md` (nomor KK).
+
+**Dasar dan batas:**
+- Tingkat mengikuti kekuatan bukti: makin kecil peluang lolos kebetulan, makin tinggi tingkatnya. Persentase di tabel dihitung dari angka acak yang merata (asumsi), jadi hanya gambaran. Angka sebenarnya diukur di uji U5.
+- **Akibatnya, NIK asli yang formatnya salah (misalnya bulan 13) menjadi `low`**, walaupun kecamatannya terdaftar. Ia hanya dilaporkan bila ada kata konteks di baris yang sama. Ini diterima dengan sengaja untuk menekan temuan palsu. Seberapa sering terjadi diukur di langkah 13 ⚠️.
+- NIK asli yang kode wilayahnya sudah lama (tidak ada di daftar 2025) jatuh ke `medium` bila provinsinya terdaftar dan formatnya sah. **Diterima sebagai batasan** (keputusan 12 Nov. 2026): yang dicari adalah apakah angka itu NIK yang bisa bocor, bukan asal wilayahnya. Daftar wilayah diperbarui bila ada keputusan baru.
+- **Pemeriksaan tanggal tetap dipakai** (keputusan 12 Nov. 2026). Tanggal lahir adalah data yang rawan, dan format sah bersama kecamatan terdaftar menjadi syarat `high`.
+- Konteks hanya dicari di baris yang sama. Judul kolom CSV (`nik`) tidak terjangkau. Itu sebabnya `high` dan `medium` harus bisa dilaporkan tanpa konteks.
+
+**Perbedaan dengan [implementasi.md](implementasi.md) (tidak diubah):** dokumen itu memakai skor angka (0,35 dan 0,4 dari default Presidio). MVP memakai tingkat karena angka itu tidak punya dasar kalibrasi. Satu paragraf di implementasi.md bagian 6 juga bertentangan dengan tabel langkah 4-nya (NIK valid tanpa konteks berskor 0,3 dan tidak dilaporkan, padahal `True` jadi 1,0). Keduanya perlu disesuaikan nanti.
 
 ---
 
@@ -296,7 +335,7 @@ PRISM/
 │   ├── __main__.py        # titik masuk: python -m prism
 │   ├── cli.py             # argumen dan exit code
 │   ├── scanner.py         # telusuri folder, prefilter, baca berkas
-│   ├── rules.py           # Rule dan rule NIK, NPWP, HP, email
+│   ├── rules.py           # Rule dan rule NIK, HP, email
 │   ├── engine.py          # regex, validasi, konteks, ambang, dedup
 │   └── report.py          # mask, teks, JSON
 ├── tests/                 # test_rules.py, test_engine.py, test_report.py, test_cli.py
@@ -318,7 +357,7 @@ Kerjakan **berurutan**. Tiap langkah punya hasil yang harus ada sebelum lanjut. 
 **Langkah 1. Verifikasi format PII dari sumber resmi** (±75 menit)
 - Kerjakan:
   - Cari format NIK: struktur 16 digit, kode wilayah, tanggal lahir (+40 untuk perempuan), daftar kode provinsi.
-  - Cari format NPWP: 15 digit lama dan 16 digit baru.
+  - Format NPWP: untuk orang pribadi sama dengan NIK (PMK 112/2022). NPWP 15 digit diparkir.
   - Cari format nomor HP Indonesia: awalan `+62` dan `08`, panjang total.
   - Format email: pola umum.
   - Pakai sumber resmi (Dukcapil, Dirjen Pajak; untuk HP cari sumber regulator telekomunikasi ⚠️), bukan blog.
@@ -360,46 +399,56 @@ Kerjakan **berurutan**. Tiap langkah punya hasil yang harus ada sebelum lanjut. 
 
 **Langkah 5. Rule pertama: NIK dengan regex saja** (±45 menit)
 - Kerjakan di `rules.py` dan `engine.py`:
-  - Buat dataclass `Rule(id, regex, base_score, context, validate)`.
-  - Buat rule NIK: `(?<!\d)\d{16}(?!\d)`, skor awal 0,3.
-  - Mesin mencari kandidat: (rule, nilai, baris, kolom, skor).
+  - Buat dataclass `Rule(id, regex, assess, context)`, dengan `assess(nilai)` mengembalikan `high`, `medium`, atau `low`.
+  - Buat rule NIK: `(?<!\d)\d{16}(?!\d)`. Sementara `assess` mengembalikan `low` untuk semua.
+  - Mesin mencari kandidat: (rule, nilai, baris, kolom, tingkat).
   - CLI mencetak lokasi (`berkas:baris:kolom`) dan keluar dengan kode 1 bila ada kandidat.
 - Cek berhasil: berkas berisi satu angka 16 digit menghasilkan exit 1. Berkas bersih menghasilkan exit 0.
 - Cetak nilai lewat fungsi `mask()` sederhana sejak langkah ini (4 karakter terakhir, sisanya `*`). Nilai utuh tidak pernah dicetak, termasuk saat belajar. Gunakan **data sintetis saja**.
-- Skor awal 0,3 belum berpengaruh di langkah ini karena ambang baru ada di langkah 8. Setelah langkah 6, NIK selalu berskor 1,0 atau dibuang.
+- Tingkat belum berpengaruh di langkah ini karena ambang baru ada di langkah 8. Semua kandidat 16 digit dilaporkan dulu.
 
-**Langkah 6. Validasi NIK** (±60 menit)
+**Langkah 6. Penilaian bukti NIK** (±75 menit)
 - Kerjakan:
-  - Buat `validate_nik(nilai) -> True/False`:
-    - digit 7–8 bernilai 1–31 (laki-laki) atau 41–71 (perempuan)
-    - digit 9–10 bernilai bulan 01–12
-    - 2 digit pertama ada di daftar provinsi (dari langkah 1)
-    - 4 digit terakhir bukan `0000`
-  - Di mesin: `True` jadi skor 1,0, `False` kandidat dibuang.
-  - Tulis tes: NIK valid laki-laki, valid perempuan, tanggal salah, bulan salah, provinsi salah, urut `0000`.
-- Cek berhasil: `pytest` untuk tes ini lulus.
+  - Muat `provinsi.csv` dan `kecamatan.csv` dari `data/reference/kode-wilayah/` (kolom `kode`, `nama`) menjadi himpunan kode.
+  - Buat tiga pemeriksa kecil:
+    - `tanggal_valid(nilai)`: digit 7–8 bernilai 01–31 (laki-laki) atau 41–71 (perempuan), digit 9–10 bulan 01–12, jumlah hari sesuai bulan (29 Februari diterima).
+    - `provinsi_valid(nilai)`: 2 digit pertama ada di daftar provinsi.
+    - `kecamatan_valid(nilai)`: 6 digit pertama ada di daftar kecamatan.
+  - Buat `assess_nik(nilai)` sesuai tabel "Tingkat keyakinan NIK" di bagian 4. Nomor urut tidak dicek.
+  - Tulis tes satu per satu: `high` (Jakarta Pusat, Gambir, laki-laki dan perempuan), `medium` karena kecamatan tidak terdaftar, `low` karena bulan salah (walau kecamatan terdaftar), `low` karena provinsi tidak terdaftar, `low` karena 16 digit acak.
+- Cek berhasil: `pytest` untuk tes ini lulus. Contoh nilai sintetis ada di bagian 2.4 `format-pii-indonesia.md`.
+- Catatan: daftar kecamatan dimuat sekali per pindai, bukan per baris.
 
-**Langkah 7. Tambah rule NPWP, HP, email** (±90 menit)
+**Langkah 7. Tambah rule HP dan email** (±75 menit)
 - Kerjakan:
-  - **NPWP:** pola 15 digit bertitik. Skor awal 0,5. NPWP 16 digit ikut rule NIK.
-  - **HP:** `(?:\+62|62|0)8\d{8,11}` dengan pemisah opsional (spasi atau `-`) dan batas bukan-digit di kiri dan kanan (`(?<!\d)` dan `(?!\d)`). Skor awal 0,4. Validasi panjang total. Kata konteks: `hp`, `telp`, `telepon`, `wa`, `whatsapp`, `kontak`.
-  - **Email:** pola email umum. Skor awal 0,5. Tanpa validasi (`None`). Kata konteks: `email`, `surel`, `mail`.
-  - Sesuaikan semua regex dan validasi dengan hasil langkah 1.
-- Cek berhasil: satu berkas uji berisi tiap jenis terdeteksi dengan jenis yang benar.
+  - **HP:** `(?:\+62|62|0)8[1-9]\d{7,10}` (digit kedua `1`–`9` menurut Permenkominfo 14/2018, panjang 9–12 digit setelah awalan menurut metadata komunitas ⚠️; dasar di `format-pii-indonesia.md` bagian 6) dengan pemisah opsional (spasi, `-`, atau `.`) di antara kelompok digit dan batas bukan-digit di kiri dan kanan (`(?<!\d)` dan `(?!\d)`). Kata konteks: `hp`, `telp`, `telepon`, `wa`, `whatsapp`, `kontak`.
+  - **Email:** subset praktis RFC 5322 (lihat `format-pii-indonesia.md` bagian 7): local-part maksimum 64 karakter, domain maksimum 255, TLD minimal 2 huruf. Kata konteks: `email`, `surel`, `mail`.
+  - **Tingkat bukti HP dan email (usulan, belum disetujui ⚠️):**
+
+| Jenis | Tingkat | Syarat | Alasan |
+|---|---|---|---|
+| HP | `high` | Berawalan `+62`, atau berawalan `0` dengan pemisah di antara kelompok digit (`0812-3456-7890`) | Tanda `+` dan pemisah jarang muncul kebetulan |
+| HP | `medium` | Digit polos berawalan `08` atau `62`, panjang sesuai | Peluang kebetulan pada digit acak ±0,9% (`08…`) dan ±0,09% (`62…`) ⚠️ perkiraan |
+| Email | `medium` | Bentuk sah, domain bukan domain cadangan RFC 2606, local-part bukan nama peran, bukan bentuk alamat SSH (`user@host:path`) | Butuh `@` dan domain bertitik, jarang kebetulan |
+| Email | `low` | Domain cadangan RFC 2606 (`example.com`, `.net`, `.org`, `.test`, `.example`, `.invalid`, `.localhost`), local-part nama peran generik (`info`, `admin`, `support`, `noreply`, `contact`, `sales`), atau bentuk SSH | European Commission: `info@company.com` bukan data pribadi. Daftar nama peran disusun sendiri ⚠️ |
+
+  - Kata konteks menaikkan satu tingkat (aturan umum langkah 8). Jadi email `low` dengan kata `email` menjadi `medium`, dan email `medium` menjadi `high`. HP `medium` dengan kata konteks menjadi `high`.
+  - Sesuaikan semua regex dengan hasil langkah 1.
+- Cek berhasil: satu berkas uji berisi tiap jenis terdeteksi dengan jenis dan tingkat yang benar.
 
 **Langkah 8. Konteks, ambang, dan dedup** (±75 menit)
 - Kerjakan di `engine.py`:
-  - **Konteks:** cari kata petunjuk (huruf kecil) di baris yang sama, ±40 karakter dari kandidat. Bila ada, skor baru = `max(skor + 0,35; 0,4)`, maksimal 1,0.
-  - **Ambang:** buang skor di bawah `--min-score` (default 0,4).
-  - **Dedup:** bila dua temuan beririsan, pilih skor tertinggi, lalu yang terpanjang, lalu urutan rule.
-- Tulis tes: HP dengan dan tanpa kata `telp`, email dengan dan tanpa `email`, dan satu kasus irisan NIK vs NPWP 16 digit.
+  - **Konteks:** cari kata petunjuk (huruf kecil) di baris yang sama, ±40 karakter dari kandidat. Bila ada, tingkat naik satu (`low` jadi `medium`, `medium` jadi `high`, `high` tetap).
+  - **Ambang:** buang tingkat di bawah `--min-level` (default `medium`). Hitung yang dibuang karena `low` sebagai `suppressed_low`.
+  - **Dedup:** bila dua temuan beririsan, pilih tingkat tertinggi, lalu yang terpanjang, lalu urutan rule.
+- Tulis tes: NIK `low` dengan dan tanpa kata `nik` (tanpa kata: dibuang dan terhitung di `suppressed_low`, dengan kata: `medium` dan dilaporkan), `--min-level low` melaporkan semuanya, HP dan email dengan dan tanpa kata konteks, dan satu kasus dua rule yang mencocokkan rentang yang sama (dedup memilih tingkat tertinggi, lalu yang terpanjang).
 - Cek berhasil: tes lulus.
 
 **Langkah 9. Laporan dan exit code final** (±75 menit)
 - Kerjakan di `report.py` dan `cli.py`:
   - **Mask:** rapikan `mask()` dari langkah 5 (4 karakter terakhir, sisanya `*`), lalu pakai di teks dan JSON.
-  - **Teks:** `berkas:baris:kolom  rule  skor=…  nilai-mask`, lalu satu baris ringkasan.
-  - **JSON** (`--json`, `--output`): `{schema_version, findings[], scan{}}` sesuai contoh di implementasi.md bagian 7.
+  - **Teks:** `berkas:baris:kolom  rule  tingkat  nilai-mask`, lalu satu baris ringkasan.
+  - **JSON** (`--json`, `--output`): `{schema_version, findings[], scan{}}` mirip contoh di implementasi.md bagian 7, dengan `level` menggantikan `score`.
   - **Exit code:** 2 bila ada error pindai, jika tidak 1 bila ada temuan, jika tidak 0.
   - Pastikan nilai utuh **tidak** muncul di laporan, pesan error, maupun log.
 - Cek berhasil:
@@ -416,22 +465,22 @@ Run PYTHONPATH=src python -m prism scan . --exclude data/synthetic --exclude tes
 Memindai: .
 Berkas: 41 diperiksa, 7 dilewati, 0 error
 
-app/seed_users.csv:12:34   nik    skor=1.00  ************0001
-docs/kontak.md:5:20        hp     skor=0.75  ********7890
-config/app.yaml:8:14       email  skor=0.50  ******************test
+app/seed_users.csv:12:34   nik    high    ************0001
+docs/kontak.md:5:20        hp     medium  ********7890
+config/app.yaml:8:14       email  medium  ******************test
 
-3 temuan (nik 1, hp 1, email 1). Laporan JSON: prism-report.json
+3 temuan (nik 1, hp 1, email 1). Tidak dilaporkan: 2 kandidat low. Laporan JSON: prism-report.json
 Error: Process completed with exit code 1.
 ```
 
-Baris terakhir adalah pesan bawaan GitHub saat step keluar dengan kode bukan 0 ⚠️.
+Baris terakhir adalah pesan bawaan GitHub saat step keluar dengan kode bukan 0 ⚠️. Tingkat HP dan email di contoh hanya ilustrasi, karena tingkatnya belum ditentukan (langkah 7).
 
 Log job saat bersih (exit 0):
 
 ```
 Memindai: .
 Berkas: 41 diperiksa, 7 dilewati, 0 error
-0 temuan.
+0 temuan. Tidak dilaporkan: 0 kandidat low.
 ```
 
 Log job saat error pindai (exit 2):
@@ -450,18 +499,18 @@ Error: Process completed with exit code 2.
 {
   "schema_version": 1,
   "findings": [
-    {"rule_id": "nik", "score": 1.0,
+    {"rule_id": "nik", "level": "high",
      "location": {"file": "app/seed_users.csv", "line": 12, "column": 34},
      "match": {"value": "************0001"}},
-    {"rule_id": "hp", "score": 0.75,
+    {"rule_id": "hp", "level": "medium",
      "location": {"file": "docs/kontak.md", "line": 5, "column": 20},
      "match": {"value": "********7890"}},
-    {"rule_id": "email", "score": 0.5,
+    {"rule_id": "email", "level": "medium",
      "location": {"file": "config/app.yaml", "line": 8, "column": 14},
      "match": {"value": "******************test"}}
   ],
   "scan": {"mode": "repo", "files": 41, "skipped": 7, "lines": 1284,
-           "findings": 3, "errors": 0, "min_score": 0.4}
+           "findings": 3, "suppressed_low": 2, "errors": 0, "min_level": "medium"}
 }
 ```
 
@@ -480,12 +529,13 @@ Perbedaan log job dan JSON:
 - Kerjakan:
   - Buat `evaluation/scripts/make_dataset.py` (Faker `id_ID` sebagai bahan nama dan email).
   - Hasilkan berkas di `data/synthetic/`: CSV, YAML, Markdown, dan kode dengan komentar.
-  - Isi **positif**: NIK, NPWP, HP, dan email palsu.
+  - Isi **positif**: NIK, HP, dan email palsu. Termasuk satu NPWP orang pribadi (16 digit, sama dengan NIK) dan satu nomor KK sintetis, berjenis `nik`.
   - Isi **negatif / pengecoh**: angka 16 digit yang tidak valid, nomor rekening, ID transaksi, timestamp, UUID.
-  - NIK positif dibuat dengan generator sendiri yang mengikuti aturan langkah 6, bukan langsung dari Faker ⚠️ (Faker `id_ID` mungkin menghasilkan NIK yang tidak lolos validasi).
-  - Tulis label di `data/labels/ground_truth.csv`: `berkas, baris, jenis, positif atau negatif`.
+  - NIK positif dibuat dengan generator sendiri yang mengikuti aturan langkah 6, bukan langsung dari Faker ⚠️ (Faker `id_ID` mungkin menghasilkan NIK yang tidak lolos pemeriksaan).
+  - Buat NIK positif untuk **tiap tingkat**: `high` (tanggal dan kecamatan valid), `medium` (kecamatan tidak terdaftar), dan sebagai negatif `low` (bulan salah dan 16 digit acak). Tambahkan satu nomor KK sintetis (format sama, tanggal = tanggal perekaman): labelnya positif dan jenisnya `nik`.
+  - Tulis label di `data/labels/ground_truth.csv`: `berkas, baris, jenis, positif atau negatif, level_diharapkan` (kolom terakhir diisi untuk NIK).
 - Cek berhasil:
-  - semua NIK positif lolos `validate_nik`
+  - `assess_nik` memberi tingkat yang sama dengan `level_diharapkan` untuk semua NIK positif
   - jumlah positif dan negatif tercatat
   - tidak ada data asli orang
 
@@ -506,7 +556,7 @@ Perbedaan log job dan JSON:
   4. Pindai: `PYTHONPATH=src python -m prism scan . --exclude data/synthetic --exclude tests --exclude evaluation/results --json --output prism-report.json`
   5. `actions/upload-artifact` untuk `prism-report.json` dengan `if: always()`
 - Pin versi ketiga Action ⚠️ (cek versi terbaru di dokumentasi sebelum dipakai).
-- Sebelum push pertama, jalankan pindai yang sama secara lokal dan lihat apakah dokumen di `docs/` memicu temuan. Contoh: `docs/planning/implementasi.md` memuat angka 16 digit contoh kartu kredit. Angka itu kemungkinan dibuang validasi provinsi (kode 41 tampaknya bukan provinsi ⚠️), tetapi pastikan lewat pindai lokal. Tambahkan `--exclude docs` bila perlu.
+- Sebelum push pertama, jalankan pindai yang sama secara lokal dan lihat apakah dokumen di `docs/` memicu temuan. Contoh: `docs/planning/implementasi.md` memuat angka 16 digit contoh kartu kredit. Angka itu kemungkinan bertingkat `low` (kode 41 bukan provinsi ⚠️) dan tidak dilaporkan, tetapi pastikan lewat pindai lokal. Tambahkan `--exclude docs` bila perlu.
 - `if: always()` pada upload membuat artifact JSON ada di setiap run, termasuk yang hijau. Bila ingin lebih hemat, ganti ke `if: failure()`.
 - Cek berhasil:
   1. Push berkas bersih: job hijau.
@@ -520,9 +570,10 @@ Perbedaan log job dan JSON:
 - Kerjakan di `evaluation/scripts/evaluate.py`:
   - Jalankan PRISM pada `data/synthetic/` (tanpa `--exclude`) dan ambil JSON.
   - Cocokkan dengan `ground_truth.csv` per (berkas, baris, jenis): hitung TP, FP, FN.
-  - Hitung precision, recall, dan FPR (pengecoh yang salah terdeteksi dibagi jumlah pengecoh).
+  - Hitung precision, recall, dan FPR (pengecoh yang salah terdeteksi dibagi jumlah pengecoh), **untuk tiap ambang** (`--min-level low`, `medium`, `high`).
+  - Hitung precision per tingkat dan bandingkan dengan peluang lolos kebetulan di bagian 4. Dari sini ambang bawaan dikonfirmasi atau diubah.
   - Ukur waktu pindai.
-  - Tulis ke `evaluation/results/`, lengkap dengan `--min-score` dan tanggal.
+  - Tulis ke `evaluation/results/`, lengkap dengan `--min-level` dan tanggal.
 - Cek berhasil: angka keluar dan bisa diulang dengan hasil yang sama (NFR-07).
 
 **Langkah 14. Dokumentasi dan demo** (±45 menit)
@@ -542,9 +593,9 @@ Perbedaan log job dan JSON:
 | B | 3. Kerangka CLI | `prism scan` dan exit code | 60 mnt |
 | B | 4. Telusuri dan prefilter | Ringkasan berkas dan baris | 75 mnt |
 | B | 5. Rule NIK (regex) | Deteksi pertama | 45 mnt |
-| B | 6. Validasi NIK | Tes lulus | 60 mnt |
-| B | 7. NPWP, HP, email | Empat rule | 90 mnt |
-| B | 8. Konteks, ambang, dedup | Skor dan penyaringan | 75 mnt |
+| B | 6. Penilaian bukti NIK | Tes lulus | 75 mnt |
+| B | 7. HP dan email | Dua rule | 75 mnt |
+| B | 8. Konteks, ambang, dedup | Tingkat dan penyaringan | 75 mnt |
 | B | 9. Laporan dan exit code | Teks, JSON, mask | 75 mnt |
 | C | 10. Data sintetis dan label | `data/` terisi | 105 mnt |
 | C | 11. Tes otomatis | `pytest` hijau | 60 mnt |
@@ -562,10 +613,13 @@ Perbedaan log job dan JSON:
 ## 8. Risiko dan hal yang perlu diputuskan
 
 - **Format PII belum diverifikasi sumber resmi.** Langkah 6 dan 7 bergantung pada langkah 1.
-- **Konteks per baris tidak menjangkau judul kolom CSV.** Itu sebabnya validasi lolos langsung 1,0 (bagian 4). Perlu diuji.
-- **NIK dan NPWP 16 digit sama.** Dedup memilih NIK. Jenis temuan NPWP 16 digit tidak akan muncul. Ini diterima untuk MVP.
+- **Konteks per baris tidak menjangkau judul kolom CSV.** Itu sebabnya `high` dan `medium` harus bisa dilaporkan tanpa konteks (bagian 4). Perlu diuji.
+- **Tingkat tidak punya kalibrasi.** Tingkat mengurutkan bukti, bukan probabilitas. Ambang dan aturan "konteks naik satu tingkat" adalah hipotesis yang diuji di langkah 13.
+- **Kode wilayah NIK asli bisa tidak ada di daftar 2025.** Diterima sebagai batasan, tidak diukur. Daftar wilayah diperbarui bila ada keputusan baru.
+- **NIK ditulis dengan pemisah atau lewat ekspor CSV/Excel.** Regex `\d{16}` belum menangani spasi, strip, atau angka yang terpotong. Perlu diputuskan sebelum langkah 5 final.
+- **NIK, NPWP orang pribadi, dan nomor KK berbentuk sama.** Semuanya terdeteksi sebagai `nik`. Itu diterima untuk MVP karena yang penting adalah terdeteksi sebagai PII.
 - **Repo berisi data uji PII sintetis.** Folder `data/synthetic`, `tests`, dan `evaluation/results` dikecualikan di CI lewat `--exclude`. Ini bukan fitur pengecualian per temuan (FR-08), jadi FR-08 tetap ditunda.
-- **Email contoh (`example.com`) ikut dilaporkan.** Tanpa daftar pengecualian domain di MVP. Data uji sebaiknya memakai domain lain agar label konsisten.
+- **Email di domain contoh RFC 2606 (`example.com` dan sejenisnya)** diberi tingkat `low`, jadi tidak dilaporkan pada ambang bawaan. Data uji untuk email positif memakai domain lain agar label konsisten.
 - **Berkas non-UTF-8 atau sangat besar** bisa membuat temuan terlewat. Dihitung sebagai dilewati dan dilaporkan dalam ringkasan.
 - **Versi GitHub Actions** perlu dicek ke dokumentasi resmi sebelum dipin.
 - **CI hanya mendeteksi.** PII sudah ter-push saat job berjalan (bagian 2).
