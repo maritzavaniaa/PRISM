@@ -96,6 +96,32 @@ Berlaku mulai 11 November 2026. Riset sebelumnya (Betterleaks, Presidio, GitHub 
 
 [45] "Nomor KTP dan NIK di KK apakah sama? Ini arti kodenya, berbeda laki-laki dan perempuan," Kompas TV, Jan. 19, 2024. [Online]. Available: https://www.kompas.tv/info-publik/478194/nomor-ktp-dan-nik-di-kk-apakah-sama-ini-arti-kodenya-berbeda-laki-laki-dan-perempuan. Accessed: Nov. 12, 2026.
 
+[46] Gitleaks, "gitleaks," GitHub repository. [Online]. Available: https://github.com/gitleaks/gitleaks. Accessed: Nov. 16, 2026.
+
+[47] "google-re2," Python Package Index (PyPI). [Online]. Available: https://pypi.org/project/google-re2/. Accessed: Nov. 16, 2026.
+
+[48] "Syntax," RE2 wiki, GitHub repository google/re2. [Online]. Available: https://github.com/google/re2/wiki/Syntax. Accessed: Nov. 16, 2026.
+
+[49] "Library reference (standard library)," Python documentation, docs.python.org. [Online]. Available: https://docs.python.org/3/library/index.html. Accessed: Nov. 16, 2026.
+
+[50] "re," Python library reference, docs.python.org. [Online]. Available: https://docs.python.org/3/library/re.html. Accessed: Nov. 16, 2026.
+
+[51] "os," Python library reference, docs.python.org. [Online]. Available: https://docs.python.org/3/library/os.html. Accessed: Nov. 16, 2026.
+
+[52] "os.path," Python library reference, docs.python.org. [Online]. Available: https://docs.python.org/3/library/os.path.html. Accessed: Nov. 16, 2026.
+
+[53] "json," Python library reference, docs.python.org. [Online]. Available: https://docs.python.org/3/library/json.html. Accessed: Nov. 16, 2026.
+
+[54] "sys," Python library reference, docs.python.org. [Online]. Available: https://docs.python.org/3/library/sys.html. Accessed: Nov. 16, 2026.
+
+[55] "argparse," Python library reference, docs.python.org. [Online]. Available: https://docs.python.org/3/library/argparse.html. Accessed: Nov. 16, 2026.
+
+[56] "csv," Python library reference, docs.python.org. [Online]. Available: https://docs.python.org/3/library/csv.html. Accessed: Nov. 16, 2026.
+
+[57] "tomllib," Python library reference, docs.python.org. [Online]. Available: https://docs.python.org/3/library/tomllib.html. Accessed: Nov. 16, 2026.
+
+[58] "dataclasses," Python library reference, docs.python.org. [Online]. Available: https://docs.python.org/3/library/dataclasses.html. Accessed: Nov. 16, 2026.
+
 ## Peta sumber
 
 | No | Bagian riset | Jenis | Dibaca | Catatan |
@@ -145,3 +171,16 @@ Berlaku mulai 11 November 2026. Riset sebelumnya (Betterleaks, Presidio, GitHub 
 | [43] | Format PII Indonesia (KK vs NIK) | Tidak resmi (media, mengutip Dirjen Dukcapil) | Seluruh artikel, lewat ringkasan alat fetch | Memuat pernyataan Zudan Arif Fakrulloh tentang NIK dan nomor KK saat pindah domisili. Tidak membahas apakah keduanya bisa bernilai sama |
 | [44] | Format PII Indonesia (KK vs NIK) | Tidak resmi (portal informasi) | Seluruh halaman, lewat ringkasan alat fetch | Tanggal hanya tertulis "4 tahun lalu". Tidak menyatakan apakah nomor KK dan NIK bisa identik. Penerbit belum dipastikan sebagai instansi pemerintah ⚠️ |
 | [45] | Format PII Indonesia (KK vs NIK) | Tidak resmi (media) | Seluruh artikel, lewat ringkasan alat fetch | Tidak mengutip pejabat untuk bagian KK. Mengutip Dispenduk Kota Mojokerto untuk rincian NIK |
+| [46] | Fitur Gitleaks untuk PRISM | Resmi (README repositori) | Halaman utama README, lewat ringkasan alat fetch (bukan teks mentah) | Menyatakan "feature complete", tidak menerima fitur baru, hanya patch keamanan. Exit code `1` = "leaks or error" (tidak membedakan temuan dari error). Tahun dan versi rilis tidak dicatat. Belum dibaca: `config/gitleaks.toml` (rule bawaan, termasuk ada tidaknya rule PII), dokumen konfigurasi terpisah, repositori GitHub Action. Nama flag dan default diringkas oleh alat fetch, cocokkan ke README asli sebelum dikutip di laporan. `--no-git` tidak disebut README ⚠️ |
+| [47] | Pilihan flavor regex (binding RE2 untuk Python) | Resmi (halaman paket) | Halaman PyPI, lewat ringkasan alat fetch. **Hanya 100.000 dari 282.744 karakter pertama yang terbaca** | Versi 1.1.20251105 (5 Nov. 2025). Wheel siap pakai Linux x86-64/ARM64, macOS, Windows untuk CPython 3.10–3.14. Metadata tertulis `~=3.9`. Instal: `pip install google-re2`. Build dari sumber butuh RE2 dan pybind11. Disebut "drop-in replacement" untuk `re`, tanpa backreference dan look-around, `\Z` harus jadi `\z`, `str` di-encode UTF-8. Tidak dijelaskan apakah posisi (offset) hasil dalam karakter atau byte ⚠️. Penerbit paket tidak terlihat di ringkasan |
+| [48] | Pilihan flavor regex (sintaks RE2) | Resmi (dokumentasi vendor) | Halaman wiki Syntax, lewat ringkasan alat fetch | Lookahead `(?=re)`, lookbehind `(?<=re)`, backreference `\1`, possessive `x*+`, dan atomic group `(?>re)` tertulis NOT SUPPORTED. `\d`, `\b` (batas kata ASCII), `(?i)`, grup bernama `(?P<name>re)`, dan kelas Unicode didukung. Tidak dijelaskan apa yang terjadi bila konstruksi tak didukung dipakai, dan caveat lain tidak dirinci |
+| [49] | Library bawaan Python | Resmi (dokumentasi Python) | Halaman pengantar, lewat ringkasan alat fetch | Penerbit dan judul halaman tidak terbaca di ringkasan, judul ditulis dengan nama bagian. Menyatakan library standar "distributed with Python". Di Windows installer "usually include the entire standard library", di sistem mirip Unix sebagian bisa perlu dipasang lewat paket OS. Versi Python halaman tidak tertulis |
+| [50] | Library bawaan Python (`re`) | Resmi (dokumentasi Python) | Halaman `re`, lewat ringkasan alat fetch, bagian yang ditanyakan saja | `finditer`, `compile`, `Match.start/end/span`, flag `ASCII`/`IGNORECASE`/`MULTILINE`, lookaround. **Tidak membahas** catastrophic backtracking atau kompleksitas waktu. Rujukan `prefixmatch()` menandakan halaman bisa lebih baru dari Python 3.13 ⚠️ |
+| [51] | Library bawaan Python (`os`) | Resmi (dokumentasi Python) | Halaman `os`, lewat ringkasan alat fetch. **Terbaca 0–200.000 dari 273.805 karakter**, termasuk `os.walk`, `os.scandir`, `os.environ` | Bagian `os.walk`: parameter, pemangkasan `dirnames`, `followlinks`, `onerror`. Rujukan `os.reload_environ` (3.14) menandakan halaman lebih baru dari 3.13 ⚠️ |
+| [52] | Library bawaan Python (`os.path`) | Resmi (dokumentasi Python) | Hanya `os.path.getsize` dan `os.path.join`, lewat ringkasan alat fetch | Bagian lain halaman tidak ditanyakan |
+| [53] | Library bawaan Python (`json`) | Resmi (dokumentasi Python) | Halaman `json`, lewat ringkasan alat fetch, bagian yang ditanyakan saja | `dumps`, `dump`, `loads`, `load`, `ensure_ascii`, `indent` |
+| [54] | Library bawaan Python (`sys`) | Resmi (dokumentasi Python) | Halaman `sys`, lewat ringkasan alat fetch. **Terbaca 0–100.000 dari 108.361 karakter** | `sys.exit`, `stdin`/`stdout`/`stderr`, `argv`. `sys.exit(objek non-integer)` mencetak ke `stderr` dan menghasilkan kode 1 |
+| [55] | Library bawaan Python (`argparse`) | Resmi (dokumentasi Python) | Halaman `argparse`, lewat ringkasan alat fetch. **Terbaca 0–100.000 dari 111.271 karakter** | `ArgumentParser`, `add_argument`, `store_true`, `choices`, `type`, `parse_args`, `--help` otomatis. Kesalahan penggunaan: kode keluar 2. Kode keluar untuk `--help` tidak disebut |
+| [56] | Library bawaan Python (`csv`) | Resmi (dokumentasi Python) | Halaman `csv`, lewat ringkasan alat fetch, bagian yang ditanyakan saja | `reader`, `writer`, `DictReader`, `DictWriter`, saran `newline=''` |
+| [57] | Library bawaan Python (`tomllib`) | Resmi (dokumentasi Python) | Halaman `tomllib`, lewat ringkasan alat fetch, hanya pembuka dan catatan versi | Ditambahkan di 3.11. Tidak mendukung penulisan. Halaman menyebut TOML 1.1.0, yang menandakan versi dokumentasi lebih baru dari 3.11 ⚠️ |
+| [58] | Library bawaan Python (`dataclasses`) | Resmi (dokumentasi Python) | Halaman `dataclasses`, lewat ringkasan alat fetch, bagian yang ditanyakan saja | `@dataclass`, metode yang dibuat, `frozen=True`, `field(default_factory=...)`. Sejak 3.13 `__eq__` membandingkan tiap field |
