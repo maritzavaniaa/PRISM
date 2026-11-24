@@ -267,6 +267,14 @@ Seluruh bagian ini adalah **usulan** sampai penyusun mengonfirmasi. Rincian ada 
 - **Keputusan:** H1–H7, dengan urutan pemotongan bila waktu kurang. Perkiraan minimum ±10,5–11 jam dan penuh ±13–14 jam. Semua perkiraan, bukan hasil pengukuran.
 - **Jurnal:** tidak untuk jurnal. Hanya pegangan kerja.
 
+### K-35 Tes ditulis bersamaan dengan tiap langkah, bukan di akhir
+- **Status:** Usulan, 24 Nov 2026. ⚠️ Belum disetujui penyusun. Mengubah urutan di [mvp-t5.md](mvp-t5.md) Lampiran B (tes `pytest` baru dilengkapi di langkah 11).
+- **Keputusan:** tiap langkah 3 sampai 9 selesai bila tes langkah itu hijau **dan** seluruh `pytest` lama tetap hijau. Langkah 11 menjadi pelengkap: matriks KF → tes, tes pengecoh, dan pemeriksaan di lingkungan bersih. Tes progres memakai contoh tulisan tangan di berkas tes, **bukan** `data/synthetic/` bagian `uji` (K-26). Rincian per langkah: [rencana-progres-implementasi.md](rencana-progres-implementasi.md).
+- **Alternatif:** tes dikumpulkan di langkah 11 sesuai mvp-t5.
+- **Alasan:** bug di rule NIK baru akan ketahuan setelah HP, laporan, dan CI dibangun di atasnya. Tes yang ditulis lebih awal juga memaksa spesifikasi jelas sebelum kode. ⚠️ Alasan penyusun, belum diuji.
+- **Batas:** tes lulus hanya membuktikan kode sesuai harapan penyusun, bukan harapannya benar (itu urusan sumber resmi dan evaluasi). `pytest` bukan pustaka standar: boleh dipakai sebagai alat pengembangan lokal, tidak boleh di-`import` dari `src/` (K-18).
+- **Jurnal:** Implementasi (pengujian).
+
 ---
 
 ## E. Proses penelitian
@@ -319,11 +327,11 @@ Bagian ini mencatat klaim yang pernah salah atau terlalu kuat, agar tidak muncul
 | 8 | Dasar batas ±40 karakter dan 1 MB | K-13, K-17 |
 | 9 | Sinkronisasi dokumen lama (`implementasi.md`, `riset-privacy-scanner-cicd.md`) dengan keputusan terbaru | K-09 |
 | 10 | Metode penelitian (kandidat Design Science Research [Hevner 2004, Peffers 2007] ⚠️ belum diverifikasi) dan bagian jurnalnya | - |
-| 11 | Pembaruan `mvp-t5.md` langkah 10 dan KF-25 agar sesuai kolom ground truth baru | K-25 |
+| 11 | ~~Pembaruan `mvp-t5.md` langkah 10 dan KF-25~~ Selesai 24 Nov 2026 (kolom baru, D1–D4, `split`, K-23 sampai K-26). Sisa: pilih bidang tahap pertama (G-14) | K-25 |
 | 12 | Catatan rinci persetujuan dosen: apa saja yang disetujui dan apakah ada syarat | Persetujuan |
 | 13 | Kriteria "hasil kurang" yang memicu perluasan ke banyak bidang (mis. recall di bawah angka tertentu, atau selisih besar dengan python-stdnum). **Tulis sebelum menjalankan data uji** | K-23, K-26 |
 | 14 | Bidang yang dipilih untuk tahap pertama dan alasannya | K-23 |
-| 15 | SRS sudah diubah untuk K-07, K-14, K-34 (24 Nov 2026). **Belum:** K-23 dan K-25 (langkah 10, KF-25). Beri tahu dosen tentang K-34 | K-34 |
+| 15 | SRS sudah diubah untuk K-07, K-14, K-34, dan (24 Nov 2026, sore) K-23 sampai K-27 serta K-35 (langkah 10, 11, 13, KF-25 sampai 27). **Belum:** beri tahu dosen tentang K-34 | K-34 |
 | 17 | Sumber untuk daftar domain pribadi, dan apakah konteks `email` berlaku untuk domain di luar daftar (usulan: tidak berlaku). Putuskan di langkah 8 | K-34 |
 | 18 | Cek asumsi "kode negara di kolom terpisah sehingga nomor tersimpan tanpa 0" ke contoh database atau aplikasi nyata | K-14 |
 | 16 | Tabel NDC per operator di Permenkominfo 14/2018 [25] dibaca atau diputuskan memakai batas libphonenumber [26] sebagai hipotesis | K-14 |

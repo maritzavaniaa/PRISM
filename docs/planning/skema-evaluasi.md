@@ -114,7 +114,7 @@ Satu hari = ±1,5–2 jam ⚠️ (asumsi, sesuaikan dengan waktumu). Total paket
 | Hari | Kerjakan | Hasil | Jam | Paket |
 |---|---|---|---|---|
 | H1 | **D1**: generator NIK sendiri, `make_dataset.py`, `ground_truth.csv` dengan kolom baru, bagi `split` | `data/synthetic/` terisi, jumlah positif dan negatif tercatat | 2 | Minimum |
-| H2 | **D2**: 30 kasus tulisan tangan (tulis dulu, **baru** jalankan PRISM). **Langkah 11**: tes `pytest` bentuk tabel | `pytest` hijau, kasus pemisah terdokumentasi | 2 | Minimum |
+| H2 | **D2**: 30 kasus tulisan tangan (tulis dulu, **baru** jalankan PRISM). **Langkah 11** (melengkapi tes yang sudah ditulis tiap langkah, K-35 ⚠️ Usulan): tes `pytest` bentuk tabel | `pytest` hijau, kasus pemisah terdokumentasi | 2 | Minimum |
 | H3 | `evaluate.py`: cocokkan dengan label, hitung metrik per ambang. Baseline `\d{16}`. **D3**: selisih dengan python-stdnum | Tabel metrik pada data kalibrasi, daftar selisih | 2 | Minimum |
 | H4 | **Kalibrasi (U5)**: bandingkan ambang dan aturan konteks pada data kalibrasi. Periksa tiap selisih stdnum. Tetapkan dan **bekukan** keputusan | Catatan keputusan beserta alasan | 1,5 | Minimum |
 | H5 | Jalankan pada data uji **sekali**. Ulang untuk cek keterulangan. Ukur waktu 3 kali | Angka akhir di `evaluation/results/` | 1,5 | Minimum |
