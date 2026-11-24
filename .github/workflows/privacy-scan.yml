@@ -1,0 +1,13 @@
+# Langkah 2 (belajar pipeline): job sengaja merah dulu, lalu hijau.
+# Akan diganti dengan workflow pindai nyata di Langkah 12.
+name: privacy-scan
+
+on: [push, pull_request]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Uji hijau (exit 0)
+        run: exit 0
