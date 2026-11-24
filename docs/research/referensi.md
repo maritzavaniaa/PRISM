@@ -122,6 +122,40 @@ Berlaku mulai 11 November 2026. Riset sebelumnya (Betterleaks, Presidio, GitHub 
 
 [58] "dataclasses," Python library reference, docs.python.org. [Online]. Available: https://docs.python.org/3/library/dataclasses.html. Accessed: Nov. 16, 2026.
 
+[59] Microsoft, "presidio-research," GitHub repository. [Online]. Available: https://github.com/microsoft/presidio-research. Accessed: Nov. 18, 2026.
+
+[60] Microsoft, "presidio-analyzer/tests/test_in_aadhaar_recognizer.py," Presidio GitHub repository. [Online]. Available: https://github.com/microsoft/presidio/blob/main/presidio-analyzer/tests/test_in_aadhaar_recognizer.py. Accessed: Nov. 18, 2026.
+
+[61] Microsoft, "presidio_analyzer/predefined_recognizers/country_specific," Presidio GitHub repository. [Online]. Available: https://github.com/microsoft/presidio/tree/main/presidio-analyzer/presidio_analyzer/predefined_recognizers/country_specific. Accessed: Nov. 18, 2026.
+
+[62] Gitleaks, "cmd/generate/config/rules/stripe.go," GitHub repository. [Online]. Available: https://github.com/gitleaks/gitleaks/blob/master/cmd/generate/config/rules/stripe.go. Accessed: Nov. 18, 2026.
+
+[63] Gitleaks, "cmd/generate/config/utils/validate.go," GitHub repository. [Online]. Available: https://github.com/gitleaks/gitleaks/blob/master/cmd/generate/config/utils/validate.go. Accessed: Nov. 18, 2026.
+
+[64] TruffleHog, "pkg/detectors/stripe/stripe_test.go," GitHub repository. [Online]. Available: https://github.com/trufflesecurity/trufflehog/blob/main/pkg/detectors/stripe/stripe_test.go. Accessed: Nov. 18, 2026.
+
+[65] TruffleHog, "hack/docs/Adding_Detectors_Internal.md," GitHub repository. [Online]. Available: https://github.com/trufflesecurity/trufflehog/blob/main/hack/docs/Adding_Detectors_Internal.md. Accessed: Nov. 18, 2026.
+
+[66] S. K. Basak, L. Neil, B. Reaves, and L. Williams, "SecretBench: A dataset of software secrets," arXiv:2303.06729, 2023. [Online]. Available: https://ar5iv.labs.arxiv.org/html/2303.06729. Accessed: Nov. 18, 2026.
+
+[67] ai4privacy, "pii-masking-openpii-1.5m," Hugging Face dataset card, 2026. [Online]. Available: https://huggingface.co/datasets/ai4privacy/pii-masking-openpii-1.5m. Accessed: Nov. 18, 2026.
+
+[68] ai4privacy, "pii-masking-nano-1k," Hugging Face dataset, 2026. [Online]. Available: https://huggingface.co/datasets/ai4privacy/pii-masking-nano-1k. Accessed: Nov. 18, 2026.
+
+[69] A. de Jong, "stdnum/id/nik.py," python-stdnum GitHub repository. [Online]. Available: https://github.com/arthurdejong/python-stdnum/blob/master/stdnum/id/nik.py. Accessed: Nov. 18, 2026.
+
+[70] Faker, "faker/providers/ssn," GitHub repository. [Online]. Available: https://github.com/joke2k/faker/tree/master/faker/providers/ssn. Accessed: Nov. 18, 2026.
+
+[71] muhfauziazhar, "nusakit-api: Indonesian data validation API," GitHub repository. [Online]. Available: https://github.com/muhfauziazhar/nusakit-api. Accessed: Nov. 18, 2026.
+
+[72] ⚠️ hndko, "randktpkkv1," GitHub repository. [Online]. Available: https://github.com/hndko/randktpkkv1. Accessed: Nov. 18, 2026. (belum dibaca langsung)
+
+[73] ⚠️ suryamsj, "nik-generator-id," GitHub repository. [Online]. Available: https://github.com/suryamsj/nik-generator-id. Accessed: Nov. 18, 2026. (belum dibaca langsung)
+
+[74] ⚠️ jotaralab, "pii-shield," GitHub repository. [Online]. Available: https://github.com/jotaralab/pii-shield. Accessed: Nov. 18, 2026. (belum dibaca langsung)
+
+[75] A. Aprilliant, "indonesian-id-card-identification," GitHub repository, 2021. [Online]. Available: https://github.com/audhiaprilliant/indonesian-id-card-identification. Accessed: Nov. 24, 2026.
+
 ## Peta sumber
 
 | No | Bagian riset | Jenis | Dibaca | Catatan |
@@ -184,3 +218,20 @@ Berlaku mulai 11 November 2026. Riset sebelumnya (Betterleaks, Presidio, GitHub 
 | [56] | Library bawaan Python (`csv`) | Resmi (dokumentasi Python) | Halaman `csv`, lewat ringkasan alat fetch, bagian yang ditanyakan saja | `reader`, `writer`, `DictReader`, `DictWriter`, saran `newline=''` |
 | [57] | Library bawaan Python (`tomllib`) | Resmi (dokumentasi Python) | Halaman `tomllib`, lewat ringkasan alat fetch, hanya pembuka dan catatan versi | Ditambahkan di 3.11. Tidak mendukung penulisan. Halaman menyebut TOML 1.1.0, yang menandakan versi dokumentasi lebih baru dari 3.11 ⚠️ |
 | [58] | Library bawaan Python (`dataclasses`) | Resmi (dokumentasi Python) | Halaman `dataclasses`, lewat ringkasan alat fetch, bagian yang ditanyakan saja | `@dataclass`, metode yang dibuat, `frozen=True`, `field(default_factory=...)`. Sejak 3.13 `__eq__` membandingkan tiap field |
+| [59] | Pengujian tool lain dan data uji PII Indonesia | Resmi (repositori vendor) | README, lewat ringkasan alat fetch | MIT, aktif (push terakhir 16 Nov. 2026). Hanya README, kode generator tidak dibaca. Metrik tidak dirinci di README. Semua contoh berbahasa Inggris. |
+| [60] | Pengujian tool lain dan data uji PII Indonesia | Resmi (repositori vendor) | Berkas tes, 60 baris pertama | Contoh pola tes parametrik per recognizer. Satu berkas, tidak mewakili semua tes Presidio. |
+| [61] | Pengujian tool lain dan data uji PII Indonesia | Resmi (repositori vendor) | Daftar nama folder | Dibaca lewat GitHub API. Tidak ada folder Indonesia. Daftar bisa berubah. |
+| [62] | Pengujian tool lain dan data uji PII Indonesia | Resmi (repositori vendor) | Seluruh berkas | Satu rule (Stripe) sebagai contoh. Berkas lain tidak dibaca. |
+| [63] | Pengujian tool lain dan data uji PII Indonesia | Resmi (repositori vendor) | Seluruh berkas, lewat ringkasan alat fetch | Isi `Validate` untuk tps dan fps. |
+| [64] | Pengujian tool lain dan data uji PII Indonesia | Resmi (repositori vendor) | 40 baris pertama | Satu detector sebagai contoh. Lisensi repo AGPL-3.0. |
+| [65] | Pengujian tool lain dan data uji PII Indonesia | Resmi (repositori vendor) | **Sebagian**: hanya baris yang memuat kata test, integration, atau pattern | Dibaca lewat grep, bukan seluruh dokumen. |
+| [66] | Pengujian tool lain dan data uji PII Indonesia | Resmi (makalah, preprint) | Metodologi dan ancaman validitas, lewat ringkasan alat fetch | Venue tidak tertulis di halaman. Hasil pencarian menyebut MSR 2023 ⚠️ belum dipastikan. PDF arXiv tidak terbaca, yang dibaca versi HTML ar5iv. |
+| [67] | Pengujian tool lain dan data uji PII Indonesia | Data | Kartu dataset (README) | Menyatakan "synthetic PII only", CC-BY-4.0. Tag lisensi di API Hugging Face tertulis `other` dengan `license_name: cc-by-4.0`. Cara pembuatan label tidak dibaca. Kartu dataset berisi 30 bahasa termasuk Indonesia. |
+| [68] | Pengujian tool lain dan data uji PII Indonesia | Data | 900 baris sampel, termasuk **30 baris bahasa Indonesia** | Dibaca lewat API datasets-server. Sampel kecil, tidak mewakili seluruh dataset. Hanya 7 nilai TAXNUM dan 10 IDCARDNUM Indonesia. |
+| [69] | Pengujian tool lain dan data uji PII Indonesia | Resmi (repositori) | Seluruh berkas `nik.py` | LGPL-2.1. Basis data `loc.dat` tidak dibaca. Dicek hanya kode validasi. `npwp.py` ada, tidak dibaca. |
+| [70] | Pengujian tool lain dan data uji PII Indonesia | Resmi (repositori) | Daftar nama folder | Dibaca lewat GitHub API. Tidak ada `id_ID` di `ssn`. Provider `person/id_ID` hanya dicari kata kunci `nik`, tidak ditemukan. |
+| [71] | Pengujian tool lain dan data uji PII Indonesia | Resmi (repositori) | README, lewat ringkasan alat fetch | MIT. Generator dummy NIK, NPWP, dan HP. Struktur angka yang dihasilkan tidak dijelaskan. Kodenya tidak dibaca. |
+| [72] | Pengujian tool lain dan data uji PII Indonesia | Tidak resmi | Tidak dibaca | ⚠️ Hanya muncul di hasil pencarian. Generator NIK dan KK (PHP). |
+| [73] | Pengujian tool lain dan data uji PII Indonesia | Tidak resmi | Tidak dibaca | ⚠️ Hanya muncul di hasil pencarian. Generator NIK (JavaScript). |
+| [74] | Pengujian tool lain dan data uji PII Indonesia | Tidak resmi | Tidak dibaca | ⚠️ Hanya muncul di hasil pencarian. Validator NIK dan NPWP berbasis Rust. |
+| [75] | Pengujian tool lain dan data uji PII Indonesia | Data (repositori) | README, `app.py`, `src/data/validator.py`, `src/utils/helper.py` (seluruhnya), dan tabel kode wilayah (kolom `code`, dibandingkan dengan `kecamatan.csv`). Notebook tidak dibaca | Dibaca lewat GitHub API. Tanpa lisensi (API GitHub: `license` kosong). Commit terakhir 13 Jul. 2021, 14 bintang. README tidak menyebut sumber aturan atau sumber tabel wilayah. Kode tidak dijalankan: logika `checkDOB` ditulis ulang di skrip sendiri untuk diuji |

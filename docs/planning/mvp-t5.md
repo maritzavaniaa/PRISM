@@ -428,13 +428,13 @@ Kelima baris pertama punya bentuk yang sama di mata regex (16 digit). Hanya peni
 | ID | PRISM harus | Asal | Cara uji |
 |---|---|---|---|
 | KF-07 | mencari kandidat NIK: tepat 16 digit berurutan yang tidak diapit digit lain | FR-03, K-03 | Tes unit: 16 digit terdeteksi, 15 dan 17 digit tidak |
-| KF-08 | mencari kandidat nomor HP Indonesia (`08…`, `62…`, `+62…`), boleh dipisah spasi, strip, atau titik di antara kelompok digit | FR-03, K-03 | Tes unit pada bentuk bertitik, berstrip, berspasi, dan `+62` |
+| KF-08 | mencari kandidat nomor HP Indonesia: `08…`, `62…`, `+62…`, dan **tanpa awalan** (`812…`, `8123…`), boleh dipisah spasi, strip, atau titik di antara kelompok digit (keputusan 24 Nov. 2026) | FR-03, K-03 | Tes unit pada enam bentuk: `081234567890`, `81234567890`, `0812-3456-7890`, `812-3456-7890`, `+6281234567890`, `+62 812-3456-7890` |
 | KF-09 | mencari kandidat email: subset praktis RFC 5322 | FR-03, K-03 | Tes unit: bentuk sah terdeteksi, bentuk di luar batas panjang tidak |
 | KF-10 | melaporkan NPWP orang pribadi (16 digit) dan nomor KK sebagai jenis `nik`, tanpa rule terpisah | FR-03 | Data uji berisi satu NPWP orang pribadi dan satu KK, keduanya dilaporkan sebagai `nik` |
 
 **Pola regex:**
 - NIK: `(?<!\d)\d{16}(?!\d)`
-- HP: `(?:\+62|62|0)8[1-9]\d{7,10}`, dengan pemisah opsional (spasi, `-`, atau `.`) di antara kelompok digit dan batas bukan-digit di kiri dan kanan (`(?<!\d)` dan `(?!\d)`). Digit kedua `1` sampai `9` menurut Permenkominfo 14/2018. Panjang 9 sampai 12 digit setelah awalan menurut metadata komunitas ⚠️.
+- HP: `(?:\+62|62|0)?8[1-9]\d{7,10}`, dengan pemisah opsional (spasi, `-`, atau `.`) di antara kelompok digit (termasuk setelah `+62`) dan batas bukan-digit di kiri dan kanan (`(?<!\d)` dan `(?!\d)`). Awalan dibuat opsional agar bentuk tanpa `0` dikenali (keputusan 24 Nov. 2026: isian sering memuat kode negara di kolom terpisah ⚠️ asumsi penyusun). Digit kedua `1` sampai `9` menurut Permenkominfo 14/2018. Panjang 9 sampai 12 digit setelah `8` menurut metadata komunitas ⚠️. Pola ini hanya titik awal, bentuk akhirnya ditetapkan di langkah 7.
 - Email: local-part maksimum 64 karakter, domain maksimum 255 karakter, TLD minimal 2 huruf.
 - Dasar semua pola: [format-pii-indonesia.md](../research/format-pii-indonesia.md) bagian 2, 6, dan 7. ⚠️ NIK yang ditulis dengan spasi atau strip belum ditangani (bagian 5.2).
 
@@ -459,19 +459,21 @@ Kelima baris pertama punya bentuk yang sama di mata regex (16 digit). Hanya peni
 - Nomor KK tidak punya rule sendiri. Strukturnya mirip NIK, jadi KK dilaporkan sebagai `nik` (KF-10).
 - Uji wajib: `high` (Jakarta Pusat, Gambir, laki-laki dan perempuan), `medium` karena kecamatan tidak terdaftar, `low` karena bulan salah (walau kecamatan terdaftar), `low` karena provinsi tidak terdaftar, dan `low` karena 16 digit acak. Contoh nilai sintetis: [format-pii-indonesia.md](../research/format-pii-indonesia.md) bagian 2.4.
 
-**KF-12. PRISM harus menilai tiap kandidat HP** sesuai tabel. ⚠️ **Usulan, belum disetujui.** (Asal: K-04. Cara uji: tes unit tiap baris tabel.)
+**KF-12. PRISM harus menilai tiap kandidat HP** sesuai tabel. **Disetujui sebagai hipotesis (24 Nov. 2026)**, tingkat diuji di U5. (Asal: K-04. Cara uji: tes unit tiap baris tabel.)
 
 | Tingkat | Syarat | Alasan |
 |---|---|---|
 | `high` | Berawalan `+62`, atau berawalan `0` dengan pemisah di antara kelompok digit (`0812-3456-7890`) | Tanda `+` dan pemisah jarang muncul kebetulan |
 | `medium` | Digit polos berawalan `08` atau `62`, panjang sesuai | Peluang kebetulan pada digit acak ±0,9% (`08…`) dan ±0,09% (`62…`) ⚠️ perkiraan |
+| `medium` | Tanpa awalan, berpemisah dengan pola 3-4-4 (`812-3456-7890`) ⚠️ hipotesis | Pola 3-4-4 berawalan `8x` jarang muncul kebetulan. Belum dihitung |
+| `low` | Tanpa awalan, digit polos (`81234567890`). Naik ke `medium` hanya bila ada kata konteks (KF-14) | Terlalu ambigu: angka 11 digit berawalan `8x` bisa berupa ID atau nominal. Pada ambang bawaan **tidak dilaporkan** tanpa kata konteks di baris yang sama (keputusan 24 Nov. 2026, pilihan (a)) |
 
-**KF-13. PRISM harus menilai tiap kandidat email** sesuai tabel. ⚠️ **Usulan, belum disetujui.** (Asal: K-04. Cara uji: tes unit tiap baris tabel.)
+**KF-13. PRISM harus menilai tiap kandidat email berdasarkan domainnya** sesuai tabel. **Disetujui (24 Nov. 2026).** (Asal: K-04. Cara uji: tes unit tiap baris tabel.)
 
 | Tingkat | Syarat | Alasan |
 |---|---|---|
-| `medium` | Bentuk sah, domain bukan domain cadangan RFC 2606, local-part bukan nama peran, bukan bentuk alamat SSH (`user@host:path`) | Butuh `@` dan domain bertitik, jarang kebetulan |
-| `low` | Domain cadangan RFC 2606 (`example.com`, `.net`, `.org`, `.test`, `.example`, `.invalid`, `.localhost`), local-part nama peran generik (`info`, `admin`, `support`, `noreply`, `contact`, `sales`), atau bentuk SSH | European Commission: `info@company.com` bukan data pribadi. Daftar nama peran disusun sendiri ⚠️ |
+| `medium` | Bentuk sah dan domain ada di daftar penyedia email pribadi: `gmail.com`, `googlemail.com`, `yahoo.com`, `yahoo.co.id`, `ymail.com`, `outlook.com`, `hotmail.com`, `live.com`, `msn.com`, `icloud.com`, `me.com`, `proton.me`, `protonmail.com` | Email pribadi lazimnya memakai penyedia umum. Daftar disusun sendiri ⚠️ tidak bersumber. Disimpan sebagai berkas data, bukan di dalam kode |
+| `low` | Bentuk sah, domain di luar daftar (termasuk domain perusahaan, `example.com`, dan alamat SSH seperti `git@github.com:user/repo.git`) | Alamat perusahaan tidak dipedulikan (keputusan penyusun). Alamat kantor `nama.lengkap@perusahaan` sebenarnya tetap data pribadi menurut European Commission, diterima sebagai batasan |
 
 | ID | PRISM harus | Asal | Cara uji |
 |---|---|---|---|
@@ -801,15 +803,15 @@ Perbedaan log job dan JSON:
 
 ### 5.2 Hal yang belum diputuskan atau diuji
 
-- **Tingkat bukti HP dan email** (KF-12, KF-13) masih usulan dan belum disetujui.
+- **Tingkat bukti HP dan email** (KF-12, KF-13) disetujui 24 Nov. 2026 sebagai hipotesis. Daftar domain email dan tingkat bentuk HP tanpa awalan diuji di U5. Belum diputuskan: apakah kata konteks `email` berlaku untuk domain di luar daftar (usulan: tidak), dan pilihan (b)/(c) untuk `81234567890` polos (K-14).
 - **Format PII belum diverifikasi semua dari sumber resmi.** Langkah 6 dan 7 bergantung pada langkah 1.
-- **NIK yang ditulis dengan pemisah atau lewat ekspor CSV/Excel.** Regex `\d{16}` belum menangani spasi, strip, atau angka yang terpotong. Perlu diputuskan sebelum langkah 5 final.
+- **NIK yang ditulis dengan pemisah atau lewat ekspor CSV/Excel.** **Diputuskan 24 Nov. 2026:** tidak didukung. Regex tetap `\d{16}`, dan tes dengan pemisah memastikan 0 temuan. Angka yang terpotong spreadsheet juga tidak terdeteksi. Ditulis sebagai batasan.
 - **Tingkat tidak punya kalibrasi.** Tingkat mengurutkan bukti, bukan probabilitas. Ambang bawaan `medium` dan aturan "konteks naik satu tingkat" adalah hipotesis yang diuji di langkah 13.
 - **Konteks per baris tidak menjangkau judul kolom CSV.** Perlu diuji.
 - **NIK asli dengan format salah** jatuh ke `low`. Seberapa sering terjadi belum diukur.
 - **Kode wilayah NIK asli bisa tidak ada di daftar 2025.** Diterima sebagai batasan, tidak diukur.
 - **NIK, NPWP orang pribadi, dan nomor KK berbentuk sama.** Semuanya dilaporkan sebagai `nik`. Diterima karena yang penting terdeteksi sebagai PII.
-- **Email di domain contoh RFC 2606** (`example.com` dan sejenisnya) diberi tingkat `low`, jadi tidak dilaporkan pada ambang bawaan. Data uji email positif memakai domain lain agar label konsisten.
+- **Email di luar daftar domain pribadi** (termasuk `example.com` dan alamat SSH) diberi tingkat `low`, jadi tidak dilaporkan pada ambang bawaan. Data uji email positif memakai domain di dalam daftar agar label konsisten.
 - **`--json` tanpa `--output`** belum ditentukan perilakunya.
 - **Kandidat `medium` yang dibuang pada `--min-level high`** tidak terhitung di ringkasan (hanya `low` yang terhitung).
 - **Urutan temuan di log** belum ditentukan secara tegas.
@@ -1119,9 +1121,9 @@ Memenuhi: KF-11.
 
 Memenuhi: KF-08, KF-09, KF-12, KF-13.
 - Kerjakan:
-  - **HP:** `(?:\+62|62|0)8[1-9]\d{7,10}` (digit kedua `1`–`9` menurut Permenkominfo 14/2018, panjang 9–12 digit setelah awalan menurut metadata komunitas ⚠️; dasar di `format-pii-indonesia.md` bagian 6) dengan pemisah opsional (spasi, `-`, atau `.`) di antara kelompok digit dan batas bukan-digit di kiri dan kanan (`(?<!\d)` dan `(?!\d)`). Kata konteks: lihat KF-14.
+  - **HP:** `(?:\+62|62|0)?8[1-9]\d{7,10}` (awalan opsional agar bentuk tanpa `0` dikenali, keputusan 24 Nov. 2026; digit kedua `1`–`9` menurut Permenkominfo 14/2018, panjang 9–12 digit setelah awalan menurut metadata komunitas ⚠️; dasar di `format-pii-indonesia.md` bagian 6) dengan pemisah opsional (spasi, `-`, atau `.`) di antara kelompok digit dan batas bukan-digit di kiri dan kanan (`(?<!\d)` dan `(?!\d)`). Kata konteks: lihat KF-14.
   - **Email:** subset praktis RFC 5322 (lihat `format-pii-indonesia.md` bagian 7): local-part maksimum 64 karakter, domain maksimum 255, TLD minimal 2 huruf. Kata konteks: lihat KF-14.
-  - **Tingkat bukti HP dan email:** ikuti KF-12 dan KF-13 (bagian 3.1). Keduanya masih usulan dan belum disetujui ⚠️.
+  - **Tingkat bukti HP dan email:** ikuti KF-12 dan KF-13 (bagian 3.1). Keduanya disetujui sebagai hipotesis (24 Nov. 2026). Daftar domain email disimpan sebagai berkas data di `data/reference/`, bukan di dalam kode.
   - Sesuaikan semua regex dengan hasil langkah 1.
 - Cek berhasil: satu berkas uji berisi tiap jenis terdeteksi dengan jenis dan tingkat yang benar.
 
