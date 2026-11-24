@@ -2,13 +2,11 @@
 
 **Produk:** PRISM (*Privacy Inspection & Scanning Module*)
 **Jenis dokumen:** Spesifikasi Kebutuhan Perangkat Lunak (SRS)
-**Status:** draf, 16 Nov. 2026. Disinkronkan dengan [log-keputusan.md](log-keputusan.md) pada 24 Nov. 2026 (sampai K-35).
+**Status:** draf, 16 Nov. 2026. Diperbarui 24 Nov. 2026. Dokumen ini adalah **satu-satunya sumber** spesifikasi dan keputusan proyek (log keputusan terpisah dihapus).
 **Penyusun:** Maritza Vania Adelia. **Dosen pembimbing:** Warsun Najib.
 **Tanda:** ⚠️ = belum diverifikasi, belum diuji, atau belum disetujui.
 
-**Dokumen terkait:** keputusan dan alasannya di [log-keputusan.md](log-keputusan.md), urutan kerja dan tes per langkah di [rencana-progres-implementasi.md](rencana-progres-implementasi.md), rancangan evaluasi di [skema-evaluasi.md](skema-evaluasi.md).
-
-⚠️ **Dua penomoran K berbeda.** Kolom **Asal** di bagian 3 memakai nomor K dari [implementasi.md](implementasi.md). Nomor `K-xx` di [log-keputusan.md](log-keputusan.md) berbeda. Bagian 4.5 memetakan keduanya, dan tulisan "K-xx" di luar kolom **Asal** merujuk ke log-keputusan.
+**Dokumen terkait:** urutan kerja dan tes per langkah di [rencana-progres-implementasi.md](rencana-progres-implementasi.md), rancangan evaluasi di [skema-evaluasi.md](skema-evaluasi.md).
 
 **Cara membaca dokumen ini:**
 - Bagian 1 dan 2: PRISM itu apa, untuk siapa, dan di mana ia dijalankan.
@@ -43,13 +41,13 @@ Struktur dokumen mengikuti pola umum SRS: pendahuluan, deskripsi umum, lalu kebu
 - **T5:** PII di berkas repositori. Dikerjakan di MVP.
 - **T3:** PII di log keluaran tes. Dikerjakan **setelah** MVP.
 
-**Data yang dicari** (keputusan 12 Nov. 2026, [K-03](log-keputusan.md#k-03-jenis-data-yang-dideteksi-nik-termasuk-npwp-orang-pribadi-dan-kk-hp-email). Diubah 24 Nov. 2026: NIK tanpa pemisah [K-07](log-keputusan.md#k-07-nik-dikenali-hanya-sebagai-16-digit-berurutan-tanpa-pemisah), HP tanpa awalan [K-14](log-keputusan.md#k-14-aturan-hp-bentuk-yang-dikenali-dan-tingkat-bukti), email dibatasi [K-34](log-keputusan.md#k-34-email-dideteksi-hanya-untuk-penyedia-email-pribadi)):
+**Data yang dicari** (keputusan 12 Nov. 2026. Diubah 24 Nov. 2026: NIK tanpa pemisah, HP tanpa awalan, email dibatasi per domain):
 
 | Jenis data | Keterangan | Jenis di laporan |
 |---|---|---|
-| NIK | 16 digit **berurutan tanpa pemisah** (K-07). Termasuk NPWP orang pribadi (sama dengan NIK sejak PMK 112/2022) dan nomor Kartu Keluarga (KK), yang strukturnya mirip NIK | `nik` |
-| Nomor HP | Nomor seluler Indonesia (`08…`, `62…`, `+62…`, dan tanpa awalan `812…`, K-14) | `hp` |
-| Email | Alamat email. Dinilai menurut domain: penyedia email pribadi (gmail, yahoo, dan sejenisnya) `medium`, domain lain `low` sehingga tidak dilaporkan pada ambang bawaan (K-34) | `email` |
+| NIK | 16 digit **berurutan tanpa pemisah**. Termasuk NPWP orang pribadi (sama dengan NIK sejak PMK 112/2022) dan nomor Kartu Keluarga (KK), yang strukturnya mirip NIK | `nik` |
+| Nomor HP | Nomor seluler Indonesia (`08…`, `62…`, `+62…`, dan tanpa awalan `812…`) | `hp` |
+| Email | Alamat email. Dinilai menurut domain: penyedia email pribadi (gmail, yahoo, dan sejenisnya) `medium`, domain lain `low` sehingga tidak dilaporkan pada ambang bawaan | `email` |
 
 **Dasar hukum:** Pasal 4 ayat (3) huruf f UU PDP ("dikombinasikan untuk mengidentifikasi seseorang").
 - **Hanya nomor HP yang disebut di teks** (Penjelasan: "antara lain nomor telepon seluler dan IP Address").
@@ -67,8 +65,8 @@ Struktur dokumen mengikuti pola umum SRS: pendahuluan, deskripsi umum, lalu kebu
 | 3 | Exit code benar: 0 bersih, 1 ada temuan, 2 error pindai | KF-21 |
 | 4 | Workflow GitHub Actions jalan saat push dan pull request. Job merah bila ada temuan, hijau bila bersih. Ada tangkapan layar sebagai bukti | KF-22, KF-23 |
 | 5 | Laporan JSON tersedia sebagai artifact | KF-18, KF-22 |
-| 6 | Ada data uji sintetis berlabel, dibagi per berkas menjadi kalibrasi dan uji (K-26). Precision, recall, F1, FPR, dan waktu pindai tercatat, dengan baseline `\d{16}` polos dan python-stdnum sebagai pembanding (K-27) | KF-25, KF-26 |
-| 7 | Tes otomatis lulus. Tes ditulis bersamaan dengan tiap langkah (K-35 ⚠️ Usulan) | KF-27 |
+| 6 | Ada data uji sintetis berlabel, dibagi per berkas menjadi kalibrasi dan uji. Precision, recall, F1, FPR, dan waktu pindai tercatat, dengan baseline `\d{16}` polos dan python-stdnum sebagai pembanding | KF-25, KF-26 |
+| 7 | Tes otomatis lulus. Tes ditulis bersamaan dengan tiap langkah (⚠️ Usulan) | KF-27 |
 
 ### 1.4 Definisi dan singkatan
 
@@ -253,7 +251,7 @@ flowchart TD
 | `json` | Menulis laporan JSON | `json.dump(laporan, f, indent=2)` |
 | `calendar` ⚠️ | Jumlah hari per bulan untuk pemeriksaan tanggal NIK. Belum diputuskan: bisa juga tabel hari per bulan buatan sendiri | `calendar.monthrange(2000, bulan)[1]` (tahun kabisat dipakai supaya 29 Februari diterima) |
 
-- Hanya saat pengembangan, bukan di runner: `pytest` (tes) dan `Faker` (bahan nama dan email untuk data uji), sesuai [K-18](log-keputusan.md#k-18-hanya-pustaka-standar-python-python-313-di-lokal-dan-ci). Hanya untuk evaluasi: `python-stdnum` sebagai pembanding independen ([K-24](log-keputusan.md#k-24-empat-sumber-data), [K-27](log-keputusan.md#k-27-metrik-dan-pembanding)). Tidak satu pun di-`import` dari `src/`.
+- Hanya saat pengembangan, bukan di runner: `pytest` (tes) dan `Faker` (bahan nama dan email untuk data uji), sesuai keputusan pustaka standar (hanya `src/` yang dibatasi). Hanya untuk evaluasi: `python-stdnum` sebagai pembanding independen. Tidak satu pun di-`import` dari `src/`.
 - Penjelasan tiap library: [library-bawaan-python.md](../research/library-bawaan-python.md).
 
 **Contoh dua baris dari awal sampai akhir** (nilai sintetis, ambang bawaan `medium`):
@@ -438,7 +436,7 @@ Kelima baris pertama punya bentuk yang sama di mata regex (16 digit). Hanya peni
 
 **Pola regex:**
 - NIK: `(?<!\d)\d{16}(?!\d)`
-- HP: `(?:\+62|62|0)?8[1-9]\d{7,10}`, dengan pemisah opsional (spasi, `-`, atau `.`) di antara kelompok digit (termasuk setelah `+62`) dan batas bukan-digit di kiri dan kanan (`(?<!\d)` dan `(?!\d)`). Awalan dibuat opsional agar bentuk tanpa `0` dikenali (keputusan 24 Nov. 2026: isian sering memuat kode negara di kolom terpisah ⚠️ asumsi penyusun). Digit kedua `1` sampai `9` menurut Permenkominfo 14/2018. Panjang 9 sampai 12 digit setelah `8` menurut metadata komunitas ⚠️. Pola ini hanya titik awal, bentuk akhirnya ditetapkan di langkah 7.
+- HP: `(?:\+62|62|0)?8[1-9]\d{7,10}`, dengan pemisah opsional (spasi, `-`, atau `.`) di antara kelompok digit (termasuk setelah `+62`) dan batas bukan-digit di kiri dan kanan (`(?<!\d)` dan `(?!\d)`). Awalan dibuat opsional agar bentuk tanpa `0` dikenali (keputusan 24 Nov. 2026: isian sering memuat kode negara di kolom terpisah ⚠️ asumsi penyusun). Digit kedua `1` sampai `9` menurut Permenkominfo 14/2018 (dicek ke PDF, 24 Nov. 2026): NDC seluler 3 digit `8XY`, ditulis `08XY` dengan X≠0,6 (`086X` memakai X≠1, `0861x` adalah kode akses data, `0801`–`0809` layanan Intelligent Network, bukan HP) (hlm. cetak 32 dan 40). Regulasi hanya memuat **struktur**, bukan tabel per operator, dan tidak memberi batas bawah panjang nomor pelanggan. Nomor internasional maksimum 15 digit, jadi paling banyak 13 digit setelah `62`. Panjang 9 sampai 12 digit setelah `8` menurut metadata komunitas ⚠️ (libphonenumber, bukan sumber pemerintah, lebih ketat dari batas 13). Pola ini hanya titik awal, bentuk akhirnya ditetapkan di langkah 7.
 - Email: local-part maksimum 64 karakter, domain maksimum 255 karakter, TLD minimal 2 huruf.
 - Dasar semua pola: [format-pii-indonesia.md](../research/format-pii-indonesia.md) bagian 2, 6, dan 7. ⚠️ NIK yang ditulis dengan spasi atau strip belum ditangani (bagian 5.2).
 
@@ -577,9 +575,9 @@ Alasan dan batas metode ini ada di bagian 4.3.
 
 | ID | PRISM harus | Asal | Cara uji |
 |---|---|---|---|
-| KF-25 | punya data uji sintetis berlabel: `data/synthetic/` (CSV, YAML, Markdown, kode berkomentar) dan `data/labels/ground_truth.csv` dengan kolom `berkas, baris, jenis, label, level_diharapkan, asal_sampel, kata_konteks, jenis_berkas, split` (K-25, tanpa kolom "bidang"). Sumber: D1 repo tiruan, D2 sekitar 30 kasus tulisan tangan, D3 pembanding python-stdnum, D4 repo publik (opsional) (K-24). Tahap pertama memakai **satu bidang** sebagai tema (K-23). Dibagi **per berkas** menjadi `kalibrasi` dan `uji` (K-26). Positif: NIK untuk tiap tingkat, HP, email (domain di daftar penyedia pribadi), satu NPWP orang pribadi, satu KK. Negatif pengecoh: 16 digit tidak valid, nomor rekening, ID transaksi, timestamp, UUID | NFR-03 | `assess_nik` memberi tingkat sama dengan `level_diharapkan`. Jumlah positif dan negatif tercatat. Tidak ada berkas di dua `split`. Tidak ada data asli orang (K-31) |
-| KF-26 | punya skrip evaluasi `evaluation/scripts/evaluate.py` yang menghitung precision, recall, F1, dan FPR untuk tiap ambang (`low`, `medium`, `high`), precision per tingkat, dan waktu pindai, dengan pembanding baseline `\d{16}` polos dan python-stdnum (K-27). Ambang dan aturan konteks ditetapkan dari data `kalibrasi`, dibekukan, lalu data `uji` dijalankan **sekali** (K-26) | NFR-02, NFR-03 | Angka keluar dan hasilnya sama bila diulang. Jumlah sampel tiap sel dilaporkan. Skrip diuji dengan contoh kecil berhasil hitungan tangan |
-| KF-27 | punya tes otomatis `pytest` untuk validasi NIK, mask, prefilter, dedup, struktur JSON, dan exit code. Tes ditulis bersamaan dengan langkahnya, dan langkah 11 menutup celah (K-35 ⚠️ Usulan) | NFR-07 | `PYTHONPATH=src pytest` hijau. Tiap KF punya paling sedikit satu tes |
+| KF-25 | punya data uji sintetis berlabel: `data/synthetic/` (CSV, YAML, Markdown, kode berkomentar) dan `data/labels/ground_truth.csv` dengan kolom `berkas, baris, jenis, label, level_diharapkan, asal_sampel, kata_konteks, jenis_berkas, split` (tanpa kolom "bidang"). Sumber: D1 repo tiruan, D2 sekitar 30 kasus tulisan tangan, D3 pembanding python-stdnum, D4 repo publik (opsional). Tahap pertama memakai **satu bidang** sebagai tema. Dibagi **per berkas** menjadi `kalibrasi` dan `uji`. Positif: NIK untuk tiap tingkat, HP, email (domain di daftar penyedia pribadi), satu NPWP orang pribadi, satu KK. Negatif pengecoh: 16 digit tidak valid, nomor rekening, ID transaksi, timestamp, UUID | NFR-03 | `assess_nik` memberi tingkat sama dengan `level_diharapkan`. Jumlah positif dan negatif tercatat. Tidak ada berkas di dua `split`. Tidak ada data asli orang |
+| KF-26 | punya skrip evaluasi `evaluation/scripts/evaluate.py` yang menghitung precision, recall, F1, dan FPR untuk tiap ambang (`low`, `medium`, `high`), precision per tingkat, dan waktu pindai, dengan pembanding baseline `\d{16}` polos dan python-stdnum. Ambang dan aturan konteks ditetapkan dari data `kalibrasi`, dibekukan, lalu data `uji` dijalankan **sekali** | NFR-02, NFR-03 | Angka keluar dan hasilnya sama bila diulang. Jumlah sampel tiap sel dilaporkan. Skrip diuji dengan contoh kecil berhasil hitungan tangan |
+| KF-27 | punya tes otomatis `pytest` untuk validasi NIK, mask, prefilter, dedup, struktur JSON, dan exit code. Tes ditulis bersamaan dengan langkahnya, dan langkah 11 menutup celah (⚠️ Usulan) | NFR-07 | `PYTHONPATH=src pytest` hijau. Tiap KF punya paling sedikit satu tes |
 
 ### 3.2 Kebutuhan antarmuka
 
@@ -721,7 +719,7 @@ Perbedaan log job dan JSON:
 | `data/reference/kode-wilayah/provinsi.csv` | 38 kode provinsi (2 digit) | KF-11 |
 | `data/reference/kode-wilayah/kecamatan.csv` | 7.285 kode kecamatan (6 digit) | KF-11 |
 | `data/reference/kode-wilayah/kabkota.csv` | 514 kode kabupaten dan kota (4 digit) | Tidak dipakai di MVP |
-| Daftar domain email pribadi (13 domain awal di KF-13; nama dan lokasi berkas ditetapkan di langkah 7, di bawah `data/reference/`) | Satu domain per baris. Disusun sendiri ⚠️ tidak bersumber (K-34) | KF-13 |
+| Daftar domain email pribadi (13 domain awal di KF-13; nama dan lokasi berkas ditetapkan di langkah 7, di bawah `data/reference/`) | Satu domain per baris. Disusun sendiri ⚠️ tidak bersumber | KF-13 |
 
 - Kolom: `kode` dan `nama`. Kode ditulis tanpa titik dan dibaca sebagai teks supaya angka nol di depan tidak hilang.
 - Dimuat sekali per pindai, bukan per baris.
@@ -748,7 +746,7 @@ Perbedaan log job dan JSON:
 
 | Hal | Pilihan MVP | Alasan |
 |---|---|---|
-| Bahasa (KN-01) | Python, hanya library standar (`argparse`, `re`, `os`, `sys`, `csv`, `json`, `dataclasses`) | Ringan dan mudah dipasang di runner (K-18) |
+| Bahasa (KN-01) | Python, hanya library standar (`argparse`, `re`, `os`, `sys`, `csv`, `json`, `dataclasses`) | Ringan dan mudah dipasang di runner |
 | Cara menjalankan | `PYTHONPATH=src python -m prism scan <folder>` | Paling sederhana untuk pemula. `pyproject.toml` ditunda |
 | Opsi CLI (3.2.1) | `--min-level` (`low`, `medium`, `high`; bawaan `medium`), `--exclude <folder>` (boleh berulang), `--json`, `--output <berkas>` | Seperlunya |
 | Tingkat bukti (KF-11 sampai KF-13) | Tiap rule memberi `high`, `medium`, atau `low` menurut bukti yang terpenuhi. **Tidak ada skor angka** | Skor angka butuh dasar kalibrasi dari data berlabel yang belum ada. Tingkat hanya mengurutkan bukti |
@@ -790,31 +788,6 @@ Perbedaan log job dan JSON:
 - Satu paragraf di implementasi.md bagian 6 bertentangan dengan tabel langkah 4-nya (NIK valid tanpa konteks berskor 0,3 dan tidak dilaporkan, padahal `True` jadi 1,0).
 - Keduanya perlu disesuaikan nanti.
 
-### 4.5 Pemetaan ke log-keputusan
-
-Keputusan dan alasan lengkapnya ada di [log-keputusan.md](log-keputusan.md). Tabel ini menunjuk K mana yang menyangkut bagian SRS mana. (Kolom **Asal** di bagian 3 memakai penomoran lain, lihat catatan di awal dokumen.)
-
-| Hal | Bagian SRS | K di log-keputusan |
-|---|---|---|
-| Ancaman T5 dulu, T3 setelah MVP | 1.2 | K-01 |
-| Hanya folder kerja, bukan riwayat git | KF-03, 5.1 | K-02 |
-| Jenis data: NIK (termasuk NPWP orang pribadi dan KK), HP, email | 1.2, KF-07 sampai 10 | K-03; K-07 (NIK tanpa pemisah); K-34 (email per domain, menggantikan K-33) |
-| IP address, secret/token, NPWP badan tidak dikerjakan | 2.7 | K-04, K-05, K-06 |
-| Regex + validasi + tingkat bukti, tanpa ML atau NER | 4.1 | K-08, K-09 |
-| Kriteria tingkat NIK dan batasnya | KF-11 | K-10, K-11, K-12 |
-| Kata konteks menaikkan satu tingkat | KF-14 | K-13 |
-| Aturan HP | KF-08, KF-12 | K-14 |
-| Ambang `medium` | KF-15 | K-15 |
-| Prefilter dan dedup | KF-06, KF-16 | K-16 |
-| Berkas yang dilewati | KF-04 | K-17 |
-| Pustaka standar, Python 3.13 | 2.4, KN-08 | K-18 |
-| Mask | KF-20 | K-19 |
-| Fingerprint HMAC ditunda | 5.3 | K-20 |
-| Exit code, aturan gagal | KF-21, KF-23 | K-21, K-22 |
-| Evaluasi: satu bidang dulu, sumber data, kolom label, aturan beku, metrik | KF-25, KF-26, langkah 10 dan 13 | K-23, K-24, K-25, K-26, K-27, K-29 |
-| Tes otomatis | KF-27, langkah 11 | K-28; K-35 (Usulan) |
-| Riset di `referensi.md`, data sintetis, repo yang tidak dipakai | - | K-30, K-31, K-32 |
-
 ---
 
 ## 5. Risiko dan hal yang belum selesai
@@ -833,9 +806,9 @@ Keputusan dan alasan lengkapnya ada di [log-keputusan.md](log-keputusan.md). Tab
 
 ### 5.2 Hal yang belum diputuskan atau diuji
 
-- **Tingkat bukti HP dan email** (KF-12, KF-13) disetujui 24 Nov. 2026 sebagai hipotesis. Daftar domain email dan tingkat bentuk HP tanpa awalan diuji di U5. Belum diputuskan: apakah kata konteks `email` berlaku untuk domain di luar daftar (usulan: tidak), dan pilihan (b)/(c) untuk `81234567890` polos (K-14).
+- **Tingkat bukti HP dan email** (KF-12, KF-13) disetujui 24 Nov. 2026 sebagai hipotesis. Daftar domain email dan tingkat bentuk HP tanpa awalan diuji di U5. Belum diputuskan: apakah kata konteks `email` berlaku untuk domain di luar daftar (usulan: tidak), dan pilihan (b)/(c) untuk `81234567890` polos.
 - **Format PII belum diverifikasi semua dari sumber resmi.** Langkah 6 dan 7 bergantung pada langkah 1.
-- **NIK yang ditulis dengan pemisah atau lewat ekspor CSV/Excel.** **Diputuskan 24 Nov. 2026:** tidak didukung. Regex tetap `\d{16}`, dan tes dengan pemisah memastikan 0 temuan. Angka yang terpotong spreadsheet juga tidak terdeteksi. Ditulis sebagai batasan.
+- **NIK yang ditulis dengan pemisah atau lewat ekspor CSV/Excel.** **Diputuskan 24 Nov. 2026:** tidak didukung. Regex tetap `\d{16}`, dan tes dengan pemisah memastikan 0 temuan. Angka yang terpotong spreadsheet juga tidak terdeteksi. Ditulis sebagai batasan. PP 40/2019 Pasal 31 ayat (2) hanya menyebut 16 digit "diletakkan secara mendatar" (dicek ke PDF, 24 Nov. 2026). Itu aturan tata letak dan **tidak menyebut pemisah**, jadi "tanpa pemisah" adalah pilihan penyusun, bukan ketentuan hukum. Jangan ditulis di jurnal sebagai dasar hukum.
 - **Tingkat tidak punya kalibrasi.** Tingkat mengurutkan bukti, bukan probabilitas. Ambang bawaan `medium` dan aturan "konteks naik satu tingkat" adalah hipotesis yang diuji di langkah 13.
 - **Konteks per baris tidak menjangkau judul kolom CSV.** Perlu diuji.
 - **NIK asli dengan format salah** jatuh ke `low`. Seberapa sering terjadi belum diukur.
@@ -849,19 +822,20 @@ Keputusan dan alasan lengkapnya ada di [log-keputusan.md](log-keputusan.md). Tab
 - **Versi GitHub Actions** perlu dicek ke dokumentasi resmi sebelum dipin.
 - **Rujukan untuk metode mask** belum ada di referensi.md.
 - **Merge PR terblokir** hanya bila *required status checks* aktif. Perlu dicek di dokumentasi GitHub.
-- **Bidang tahap pertama belum dipilih** (K-23, G-14). **Kriteria "hasil kurang"** yang memicu perluasan ke banyak bidang belum ditulis (G-13). Tulis **sebelum** menjalankan data uji, bila tidak perluasan itu bisa dinilai menyesuaikan hasil.
-- **Definisi metrik** (precision, recall, F1, FPR) dan **dasar pemisahan kalibrasi dan uji** belum bersumber (G-5, G-6). Isi daftar wilayah python-stdnum belum dibandingkan dengan Kepmendagri 2430/2025, sehingga selisih bisa berasal dari beda tahun daftar (G-3).
-- **Perubahan K-34 (email dibatasi per domain) belum disampaikan ke dosen**, padahal rencana yang disetujui 18 Nov. memuat email tanpa pembatasan (G-15).
-- **K-35 (tes ditulis bersamaan dengan langkah) berstatus Usulan.** Bila ditolak, kembalikan tes ke langkah 11 dan ubah catatan di Lampiran B.
+- **Bidang tahap pertama belum dipilih**. **Kriteria "hasil kurang"** yang memicu perluasan ke banyak bidang belum ditulis. Tulis **sebelum** menjalankan data uji, bila tidak perluasan itu bisa dinilai menyesuaikan hasil.
+- **Definisi metrik** (precision, recall, F1, FPR) dan **dasar pemisahan kalibrasi dan uji** belum bersumber. Isi daftar wilayah python-stdnum belum dibandingkan dengan Kepmendagri 2430/2025, sehingga selisih bisa berasal dari beda tahun daftar.
+- **Perubahan cakupan email (dibatasi per domain) belum disampaikan ke dosen**, padahal rencana yang disetujui 18 Nov. memuat email tanpa pembatasan.
+- **Aturan "tes ditulis bersamaan dengan langkah" berstatus Usulan.** Bila ditolak, kembalikan tes ke langkah 11 dan ubah catatan di Lampiran B.
 
 ### 5.3 Setelah MVP
 
 - T3: pindai berkas log keluaran tes (`--mode log`).
 - Tahap 2: data umum butir a sampai e (nama lengkap, jenis kelamin, kewarganegaraan, agama, status perkawinan) lewat kunci-nilai, kamus nilai, dan pembaca CSV. Hati-hati dengan kunci umum seperti `name`, yang muncul di banyak konfigurasi dan bukan nama orang.
 - Pengecualian per temuan dan berkas konfigurasi (FR-07, FR-08).
-- Fingerprint HMAC untuk mengenali temuan berulang ([K-20](log-keputusan.md#k-20-fingerprint-hmac-untuk-mengenali-temuan-yang-sama-ditunda)).
+- Fingerprint HMAC untuk mengenali temuan berulang (ditunda: hash polos tidak aman karena ruang nilai NIK dan HP kecil, perlu HMAC berkunci).
 - Paket atau GitHub Action yang bisa dipakai ulang.
-- Uji kesesuaian U1 sampai U6 dengan Presidio dan Betterleaks. Presidio (U1) boleh dikerjakan di langkah 13 bila waktu ada, dan paling dulu dipotong bila mepet (K-27, [skema-evaluasi.md](skema-evaluasi.md)).- Sinkronisasi dokumen lain dengan cakupan PII saja.
+- Uji kesesuaian U1 sampai U6 dengan Presidio dan Betterleaks. Presidio (U1) boleh dikerjakan di langkah 13 bila waktu ada, dan paling dulu dipotong bila mepet ([skema-evaluasi.md](skema-evaluasi.md)).
+- Sinkronisasi dokumen lain dengan cakupan PII saja.
 
 ---
 
@@ -1071,7 +1045,7 @@ PRISM/
 
 Kerjakan **berurutan**. Tiap langkah punya hasil yang harus ada sebelum lanjut. Jangan menambah fitur di luar daftar.
 
-**Aturan tes (K-35 ⚠️ Usulan, 24 Nov. 2026):** tes untuk langkah 3 sampai 9 ditulis **bersamaan** dengan langkahnya, bukan menunggu langkah 11. Satu langkah selesai bila tesnya hijau dan seluruh `pytest` lama tetap hijau. Tes memakai contoh tulisan tangan di berkas tes, **bukan** bagian `uji` di `data/synthetic/` (K-26). Rincian tes tiap langkah ada di [rencana-progres-implementasi.md](rencana-progres-implementasi.md).
+**Aturan tes (⚠️ Usulan, 24 Nov. 2026):** tes untuk langkah 3 sampai 9 ditulis **bersamaan** dengan langkahnya, bukan menunggu langkah 11. Satu langkah selesai bila tesnya hijau dan seluruh `pytest` lama tetap hijau. Tes memakai contoh tulisan tangan di berkas tes, **bukan** bagian `uji` di `data/synthetic/`. Rincian tes tiap langkah ada di [rencana-progres-implementasi.md](rencana-progres-implementasi.md).
 
 #### Fase A. Persiapan
 
@@ -1191,29 +1165,29 @@ Memenuhi: KF-17, KF-18, KF-19, KF-20, KF-21.
 
 **Langkah 10. Data uji sintetis dan label** (±105 menit)
 
-Memenuhi: KF-25. Keputusan terkait: K-23, K-24, K-25, K-26, K-31.
+Memenuhi: KF-25.
 - Kerjakan:
   - Buat `evaluation/scripts/make_dataset.py` (Faker `id_ID` sebagai bahan nama dan email).
-  - Pilih **satu bidang** sebagai tema tahap pertama (K-23, belum dipilih ⚠️). Bidang hanya tema pembuat data, bukan kolom label (K-25).
-  - Hasilkan berkas di `data/synthetic/`: CSV, YAML, Markdown, dan kode dengan komentar (D1, K-24).
-  - Tulis sekitar 30 kasus tulisan tangan di `data/synthetic/tulis_tangan/` (D2): NIK dengan spasi atau tanda hubung, NIK di CSV ekspor, angka 16 digit di log, NIK di tengah kalimat. Tulis **sebelum menjalankan PRISM padanya**. Kasus berpemisah diharapkan **0 temuan** (K-07).
-  - Isi **positif**: NIK, HP, dan email palsu. Email positif memakai domain di daftar penyedia pribadi (K-34). Termasuk satu NPWP orang pribadi (16 digit, sama dengan NIK) dan satu nomor KK sintetis, berjenis `nik`.
+  - Pilih **satu bidang** sebagai tema tahap pertama (belum dipilih ⚠️). Bidang hanya tema pembuat data, bukan kolom label.
+  - Hasilkan berkas di `data/synthetic/`: CSV, YAML, Markdown, dan kode dengan komentar (D1).
+  - Tulis sekitar 30 kasus tulisan tangan di `data/synthetic/tulis_tangan/` (D2): NIK dengan spasi atau tanda hubung, NIK di CSV ekspor, angka 16 digit di log, NIK di tengah kalimat. Tulis **sebelum menjalankan PRISM padanya**. Kasus berpemisah diharapkan **0 temuan**.
+  - Isi **positif**: NIK, HP, dan email palsu. Email positif memakai domain di daftar penyedia pribadi. Termasuk satu NPWP orang pribadi (16 digit, sama dengan NIK) dan satu nomor KK sintetis, berjenis `nik`.
   - Isi **negatif / pengecoh**: angka 16 digit yang tidak valid, nomor rekening, ID transaksi, timestamp, UUID.
   - NIK positif dibuat dengan generator sendiri yang mengikuti aturan langkah 6, bukan langsung dari Faker ⚠️ (Faker `id_ID` mungkin menghasilkan NIK yang tidak lolos pemeriksaan).
   - Buat NIK positif untuk **tiap tingkat**: `high` (tanggal dan kecamatan valid), `medium` (kecamatan tidak terdaftar), dan sebagai negatif `low` (bulan salah dan 16 digit acak). Tambahkan satu nomor KK sintetis (format sama, tanggal = tanggal perekaman): labelnya positif dan jenisnya `nik`.
-  - Tulis label di `data/labels/ground_truth.csv` dengan kolom `berkas, baris, jenis, label, level_diharapkan, asal_sampel, kata_konteks, jenis_berkas, split` (K-25). `level_diharapkan` diisi untuk NIK. `split` bernilai `kalibrasi` atau `uji`.
-  - Bagi **per berkas**, bukan per baris (K-26): sekitar sepertiga berkas D1 menjadi `kalibrasi`, sisanya ditambah seluruh D2 menjadi `uji`.
+  - Tulis label di `data/labels/ground_truth.csv` dengan kolom `berkas, baris, jenis, label, level_diharapkan, asal_sampel, kata_konteks, jenis_berkas, split`. `level_diharapkan` diisi untuk NIK. `split` bernilai `kalibrasi` atau `uji`.
+  - Bagi **per berkas**, bukan per baris: sekitar sepertiga berkas D1 menjadi `kalibrasi`, sisanya ditambah seluruh D2 menjadi `uji`.
 - Cek berhasil:
   - `assess_nik` memberi tingkat yang sama dengan `level_diharapkan` untuk semua NIK positif
   - jumlah positif dan negatif tercatat
   - tidak ada berkas yang punya baris di dua `split`
-  - tidak ada data asli orang (K-31)
+  - tidak ada data asli orang
 
 **Langkah 11. Tes otomatis (melengkapi)** (±60 menit)
 
-Memenuhi: KF-27. Keputusan terkait: K-28, K-35 (⚠️ Usulan).
+Memenuhi: KF-27 (⚠️ Usulan).
 - Kerjakan:
-  - Tes inti sudah ditulis di langkah 3 sampai 9 (K-35). Langkah ini **menutup celah**: buat matriks KF → tes (tiap KF-01 sampai KF-24 punya paling sedikit satu tes), tambah tes pengecoh (UUID, timestamp, nomor rekening tidak boleh terdeteksi), dan jalankan di lingkungan bersih.
+  - Tes inti sudah ditulis di langkah 3 sampai 9. Langkah ini **menutup celah**: buat matriks KF → tes (tiap KF-01 sampai KF-24 punya paling sedikit satu tes), tambah tes pengecoh (UUID, timestamp, nomor rekening tidak boleh terdeteksi), dan jalankan di lingkungan bersih.
   - Lengkapi `tests/` dengan pytest: validasi NIK, mask, prefilter, dedup, struktur JSON, exit code.
   - Folder `tests/` dikecualikan di CI (langkah 12), jadi nilai uji sintetis boleh ditulis langsung di berkas tes.
   - Tes dijalankan lokal. Menjalankannya juga di CI itu opsional dan bukan syarat MVP.
@@ -1243,15 +1217,15 @@ Memenuhi: KF-22, KF-23, KF-24.
 
 **Langkah 13. Evaluasi** (±90 menit)
 
-Memenuhi: KF-26, KN-02, KN-03, KN-06. Keputusan terkait: K-23, K-24, K-26, K-27, K-29. Jadwal rinci: [skema-evaluasi.md](skema-evaluasi.md) bagian 6.
-- **Sebelum menjalankan data uji:** tulis kriteria "hasil kurang" yang memicu perluasan ke banyak bidang (K-23, G-13).
+Memenuhi: KF-26, KN-02, KN-03, KN-06. Jadwal rinci: [skema-evaluasi.md](skema-evaluasi.md) bagian 6.
+- **Sebelum menjalankan data uji:** tulis kriteria "hasil kurang" yang memicu perluasan ke banyak bidang.
 - Kerjakan di `evaluation/scripts/evaluate.py`:
   - Jalankan PRISM pada `data/synthetic/` (tanpa `--exclude`) dan ambil JSON.
   - Cocokkan dengan `ground_truth.csv` per (berkas, baris, jenis): hitung TP, FP, FN.
   - Hitung precision, recall, F1, dan FPR (pengecoh yang salah terdeteksi dibagi jumlah pengecoh), **untuk tiap ambang** (`--min-level low`, `medium`, `high`). Laporkan jumlah sampel tiap sel.
   - Hitung precision per tingkat dan bandingkan dengan peluang lolos kebetulan di KF-11 (bagian 3.1).
-  - **Urutan wajib (K-26):** (1) bandingkan ambang dan aturan konteks pada data `kalibrasi`, (2) tulis keputusan dan alasannya, (3) **bekukan**, (4) jalankan data `uji` **sekali**. Bila hasil uji mengecewakan lalu aturan diperbaiki, laporan harus menyebut bahwa data uji sudah terlihat.
-  - Pembanding (K-27): baseline `\d{16}` polos, dan python-stdnum pada NIK dari D1 dan D2. Tiap selisih diperiksa: salah di PRISM, salah di stdnum, atau beda tahun daftar wilayah. Presidio (U1) opsional.
+  - **Urutan wajib:** (1) bandingkan ambang dan aturan konteks pada data `kalibrasi`, (2) tulis keputusan dan alasannya, (3) **bekukan**, (4) jalankan data `uji` **sekali**. Bila hasil uji mengecewakan lalu aturan diperbaiki, laporan harus menyebut bahwa data uji sudah terlihat.
+  - Pembanding: baseline `\d{16}` polos, dan python-stdnum pada NIK dari D1 dan D2. Tiap selisih diperiksa: salah di PRISM, salah di stdnum, atau beda tahun daftar wilayah. Presidio (U1) opsional.
   - Ukur waktu pindai tiga kali, laporkan median.
   - Tulis ke `evaluation/results/`, lengkap dengan `--min-level` dan tanggal.
 - Cek berhasil: angka keluar dan bisa diulang dengan hasil yang sama (NFR-07). Skrip evaluasi sendiri diuji dengan contoh kecil yang hasilnya dihitung tangan.
@@ -1278,7 +1252,7 @@ Memenuhi: dokumentasi dan bukti MVP (bagian 1.3).
 | B | 8. Konteks, ambang, dedup | Tingkat dan penyaringan | 75 mnt |
 | B | 9. Laporan dan exit code | Teks, JSON, mask | 75 mnt |
 | C | 10. Data sintetis dan label | `data/` terisi | 105 mnt |
-| C | 11. Tes otomatis (melengkapi, K-35) | `pytest` hijau | 60 mnt |
+| C | 11. Tes otomatis (melengkapi) | `pytest` hijau | 60 mnt |
 | D | 12. Workflow nyata | Merah dan hijau di CI | 50 mnt |
 | E | 13. Evaluasi | Precision, recall, F1, FPR, waktu | 90 mnt |
 | E | 14. Dokumentasi | README, bukti | 45 mnt |
@@ -1287,4 +1261,4 @@ Memenuhi: dokumentasi dan bukti MVP (bagian 1.3).
 - Langkah 1 harus selesai sebelum langkah 6 dan 7 (aturan validasi butuh sumber resmi).
 - Langkah 10 boleh dikerjakan paralel dengan langkah 7 sampai 9.
 - Bila waktu mepet, urutan prioritas: langkah 1 sampai 6, 9, 12, lalu sisanya.
-- ⚠️ **Total ±16 jam di atas memakai waktu lama untuk langkah 10, 11, dan 13 (105 + 60 + 90 = 255 menit).** [skema-evaluasi.md](skema-evaluasi.md) bagian 6 memperinci ketiganya menjadi ±10,5–11 jam (minimum) atau ±13–14 jam (penuh), setelah jam evaluasi dikoreksi ([log-keputusan.md](log-keputusan.md) bagian F, 18 Nov). Bila memakai angka skema-evaluasi, total menjadi sekitar **22–23 jam (minimum)** atau **25–26 jam (penuh)** (695 menit langkah lain + angka skema-evaluasi, perkiraan saya, bagian "Tulis hasil" H7 mungkin sedikit tumpang tindih dengan langkah 14). Angka mana yang dipakai belum diputuskan.
+- ⚠️ **Total ±16 jam di atas memakai waktu lama untuk langkah 10, 11, dan 13 (105 + 60 + 90 = 255 menit).** [skema-evaluasi.md](skema-evaluasi.md) bagian 6 memperinci ketiganya menjadi ±10,5–11 jam (minimum) atau ±13–14 jam (penuh), setelah jam evaluasi dikoreksi pada 18 Nov. (dari ±8 jam). Bila memakai angka skema-evaluasi, total menjadi sekitar **22–23 jam (minimum)** atau **25–26 jam (penuh)** (695 menit langkah lain + angka skema-evaluasi, perkiraan saya, bagian "Tulis hasil" H7 mungkin sedikit tumpang tindih dengan langkah 14). Angka mana yang dipakai belum diputuskan.
