@@ -1081,6 +1081,8 @@ Memenuhi: KF-22, KF-23.
 
 **Langkah 3. Kerangka CLI** (±60 menit)
 
+**Status: selesai 24 Nov. 2026.** `src/prism/{__init__,__main__,cli}.py` dan `tests/test_cli.py` (9 tes hijau, Python 3.13 lewat `.venv`). Perilaku sementara: `scan <folder>` keluar dengan kode 2 sampai langkah 4.
+
 Memenuhi: KF-01, KF-02.
 - Kerjakan:
   - Buat `src/prism/__main__.py` dan `cli.py` dengan `argparse`: `prism scan <path>`.

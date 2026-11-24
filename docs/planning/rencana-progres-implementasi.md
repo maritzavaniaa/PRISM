@@ -16,7 +16,7 @@
 |---|---|---|---|---|---|
 | [1](#langkah-1-verifikasi-format-pii) ✅ | Format PII bersumber resmi | KF-07 sampai 09 (dasar) | Tiap angka punya sumber (cek dokumen) | 75 mnt | 8% |
 | [2](#langkah-2-workflow-merah-dan-hijau) ✅ | Workflow merah lalu hijau | KF-22, KF-23 (kerangka) | Manual: tangkapan layar | 45 mnt | 13% |
-| [3](#langkah-3-kerangka-cli) | `prism scan` + exit code | KF-01, KF-02 | pytest CLI | 60 mnt | 19% |
+| [3](#langkah-3-kerangka-cli) ✅ | `prism scan` + exit code | KF-01, KF-02 | pytest CLI | 60 mnt | 19% |
 | [4](#langkah-4-telusuri-folder-dan-prefilter) | Telusur + prefilter | KF-03 sampai 06 | pytest folder sementara | 75 mnt | 27% |
 | [5](#langkah-5-rule-nik-dengan-regex) | Deteksi NIK pertama | KF-07, awal KF-20 & 21 | pytest rule + CLI | 45 mnt | 32% |
 | [6](#langkah-6-penilaian-bukti-nik) | Tingkat bukti NIK | KF-11, KF-10 | pytest tabel (`high`/`medium`/`low`) | 75 mnt | 39% |
@@ -121,6 +121,8 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 #### Langkah 3. Kerangka CLI
 [Langkah 3](mvp-t5.md#L1076) · ±60 mnt · kumulatif 19%
 
+**Status: ✅ selesai 24 Nov 2026.** 9 tes hijau di Python 3.13 (`.venv`). Jalankan: `PYTHONPATH=src .venv/bin/python -m pytest -q`.
+
 - **Kebutuhan:** [KF-01](mvp-t5.md#L421), [KF-02](mvp-t5.md#L422), [KN-08](mvp-t5.md#L739).
 - **Tes progres** (`tests/test_cli.py`):
 
@@ -132,7 +134,7 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 | `python --version` di lokal | 3.13 (sama dengan CI, KN-08) |
 
 - **Selesai bila:** `pytest` hijau dan `PYTHONPATH=src python -m prism scan sample.txt; echo $?` mencetak 0.
-- **Putuskan di sini:** pasang `pytest` lokal (satu kali). Tidak masuk `src/`.
+- **Sudah dikerjakan:** `pytest` dipasang di `.venv` (Python 3.13, folder `.venv` sudah diabaikan git). `python3` bawaan shell masih 3.9.6, jadi selalu pakai `.venv/bin/python`. Tes `test_python_yang_dipakai_adalah_3_13` sengaja gagal bila dijalankan dengan Python lain.
 
 #### Langkah 4. Telusuri folder dan prefilter
 [Langkah 4](mvp-t5.md#L1087) · ±75 mnt · kumulatif 27%
