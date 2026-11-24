@@ -14,8 +14,8 @@
 
 | Langkah | Hasil | KF / KN | Tes penanda selesai | Waktu | Kumulatif |
 |---|---|---|---|---|---|
-| [1](#langkah-1-verifikasi-format-pii) | Format PII bersumber resmi | KF-07 sampai 09 (dasar) | Tiap angka punya sumber (cek dokumen) | 75 mnt | 8% |
-| [2](#langkah-2-workflow-merah-dan-hijau) | Workflow merah lalu hijau | KF-22, KF-23 (kerangka) | Manual: tangkapan layar | 45 mnt | 13% |
+| [1](#langkah-1-verifikasi-format-pii) ✅ | Format PII bersumber resmi | KF-07 sampai 09 (dasar) | Tiap angka punya sumber (cek dokumen) | 75 mnt | 8% |
+| [2](#langkah-2-workflow-merah-dan-hijau) ✅ | Workflow merah lalu hijau | KF-22, KF-23 (kerangka) | Manual: tangkapan layar | 45 mnt | 13% |
 | [3](#langkah-3-kerangka-cli) | `prism scan` + exit code | KF-01, KF-02 | pytest CLI | 60 mnt | 19% |
 | [4](#langkah-4-telusuri-folder-dan-prefilter) | Telusur + prefilter | KF-03 sampai 06 | pytest folder sementara | 75 mnt | 27% |
 | [5](#langkah-5-rule-nik-dengan-regex) | Deteksi NIK pertama | KF-07, awal KF-20 & 21 | pytest rule + CLI | 45 mnt | 32% |
@@ -57,7 +57,7 @@ Evaluasi (precision, recall, F1, FPR di langkah 13) **bukan** tes progres. Itu p
 2. **Satu langkah selesai bila tes langkah itu hijau dan seluruh `pytest` lama tetap hijau.** Jalankan seluruhnya, bukan hanya tes baru, supaya tahu langkah baru tidak merusak yang lama.
 3. **Tes ditulis dari tabel di SRS, bukan dari keluaran kodenya.** Bila tes disalin dari apa yang dikeluarkan program, tes pasti lulus walau programnya salah.
 4. **Nilai uji sintetis boleh ditulis langsung di berkas tes** (folder `tests/` dikecualikan di CI, [KF-24](mvp-t5.md#L572)).
-5. **`pytest` hanya alat pengembangan.** Ia bukan pustaka standar.  berlaku untuk kode PRISM di `src/`, jadi `pytest` boleh dipasang di mesin lokal, tetapi tidak boleh di-`import` dari `src/` dan tidak dipasang di workflow ([Langkah 11](mvp-t5.md#L1184) menyebut tes dijalankan lokal).
+5. **`pytest` hanya alat pengembangan.** Ia bukan pustaka standar. Aturan "hanya pustaka standar" berlaku untuk kode PRISM di `src/`, jadi `pytest` boleh dipasang di mesin lokal, tetapi tidak boleh di-`import` dari `src/` dan tidak dipasang di workflow ([Langkah 11](mvp-t5.md#L1184) menyebut tes dijalankan lokal).
 6. **Langkah gagal = jangan lanjut.** Perbaiki dulu. Keputusan baru yang muncul dicatat di [mvp-t5.md](mvp-t5.md) pada hari yang sama (satu-satunya sumber spesifikasi).
 
 ### 2.3 Batas antara tes progres dan evaluasi
@@ -87,6 +87,8 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 #### Langkah 1. Verifikasi format PII
 [Langkah 1](mvp-t5.md#L1050) · ±75 mnt · kumulatif 8%
 
+**Status: ✅ selesai 24 Nov 2026.** Sisa ⚠️ di dokumen format PII tidak menghalangi (batas panjang HP, keputusan wilayah setelah 2025).
+
 - **Kebutuhan:** dasar [KF-07](mvp-t5.md#L432), [KF-08](mvp-t5.md#L433), [KF-09](mvp-t5.md#L434).
 - **Tes progres:** bukan kode. Ceklis dokumen [format-pii-indonesia.md](../research/format-pii-indonesia.md):
   - setiap angka dan aturan punya sumber bernomor di [referensi.md](../research/referensi.md)
@@ -98,6 +100,8 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 
 #### Langkah 2. Workflow merah dan hijau
 [Langkah 2](mvp-t5.md#L1062) · ±45 mnt · kumulatif 13%
+
+**Status: ✅ selesai 24 Nov 2026.** Merah dan hijau sudah terlihat, tangkapan layar diambil.
 
 - **Kebutuhan:** kerangka [KF-22](mvp-t5.md#L570), [KF-23](mvp-t5.md#L571).
 - **Tes progres (manual):**
@@ -150,7 +154,7 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 
 - **Selesai bila:** angka ringkasan (diperiksa, dilewati, error, baris) sesuai hitungan manual pada folder uji kecil.
 - **Putuskan di sini:** batas 1 MB (belum diuji, [5.2](mvp-t5.md#52-hal-yang-belum-diputuskan-atau-diuji)), dasar angkanya belum bersumber. Urutan berkas ditelusuri (`os.walk` urutannya tidak dijamin, **urutkan** supaya hasil bisa diulang, KN-06).
-- **Batas yang diterima:** NIK di riwayat git tidak dipindai ().
+- **Batas yang diterima:** NIK di riwayat git tidak dipindai (hanya folder kerja).
 
 #### Langkah 5. Rule NIK dengan regex
 [Langkah 5](mvp-t5.md#L1101) · ±45 mnt · kumulatif 32%
@@ -196,7 +200,7 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
   Tambahan: jumlah kode di `provinsi.csv` = 38, `kecamatan.csv` = 7.285, dimuat **sekali** per pindai (bukan per baris).
 - **Selesai bila:** semua baris tabel hijau, dan setiap contoh valid dicek **tangan** terhadap sumber resmi (bukan hanya terhadap kode).
 - **Gerbang 1 (NIK end-to-end):** `prism scan` pada satu berkas berisi NIK sintetis mencetak lokasi, tingkat benar, nilai di-mask, exit 1. Ini titik aman pertama, dan kamu sudah bisa memperlihatkan sesuatu yang bekerja.
-- **Batas yang diterima:** NIK asli dengan kode wilayah lama jatuh ke `medium` atau `low` ().
+- **Batas yang diterima:** NIK asli dengan kode wilayah lama jatuh ke `medium` atau `low`.
 
 ### Gerbang 1 → lanjut ke HP dan email
 
@@ -217,7 +221,7 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 | Email | Daftar domain dibaca dari **berkas data** di `data/reference/` | Menambah satu domain di berkas mengubah hasil **tanpa** mengubah kode |
 
 - **Selesai bila:** satu berkas uji berisi ketiga jenis terdeteksi dengan jenis dan tingkat benar, dan seluruh `pytest` hijau.
-- **Putuskan di sini:** pilihan (b)/(c) untuk `81234567890` polos (, saat ini (a): tidak dilaporkan tanpa konteks). Tambahan domain pribadi dicatat di .
+- **Putuskan di sini:** pilihan (b)/(c) untuk `81234567890` polos (saat ini pilihan (a): tidak dilaporkan tanpa konteks). Tambahan domain pribadi dicatat di mvp-t5 (KF-13).
 - ⚠️ Tingkat HP dan email adalah **hipotesis** (disetujui 24 Nov). Jangan mengubahnya berdasarkan intuisi di sini. Diuji di langkah 13.
 - ⚠️ Bila HP dan email terasa menyita waktu, ingat urutan pemotongan di [B.3](mvp-t5.md#b3-ringkasan-urutan-dan-waktu): langkah 1 sampai 6, 9, 12 dulu.
 
@@ -244,7 +248,7 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 - **Putuskan di sini:**
   - apakah konteks `email` berlaku untuk domain di luar daftar, 
   - apakah `medium` yang dibuang pada `--min-level high` ikut dihitung di ringkasan ([5.2](mvp-t5.md#52-hal-yang-belum-diputuskan-atau-diuji))
-  - konteks per baris tidak menjangkau judul kolom CSV (): cukup dicatat sebagai batasan, diukur di langkah 13
+  - konteks per baris tidak menjangkau judul kolom CSV: cukup dicatat sebagai batasan, diukur di langkah 13
 - ⚠️ Aturan "naik satu tingkat" dan ±40 karakter adalah hipotesis tanpa dasar teori. Tes di sini hanya memastikan **kode sesuai hipotesis**, bukan hipotesisnya benar.
 
 #### Langkah 9. Laporan dan exit code final
@@ -350,7 +354,7 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 | Evaluasi diulang dua kali | Angka **sama** (KN-06) |
 | Waktu pindai | Tiga kali, laporkan median |
 
-- **Urutan wajib** (): kalibrasi → tulis keputusan → **bekukan** → jalankan data uji **sekali**.
+- **Urutan wajib:** kalibrasi → tulis keputusan → **bekukan** → jalankan data uji **sekali**.
 - **Putuskan sebelum menjalankan data uji:** kriteria "hasil kurang" yang memicu perluasan ke banyak bidang. Bila ditulis setelah melihat hasil, kriterianya tidak sahih.
 - **Selesai bila:** angka per ambang tersimpan di `evaluation/results/` dengan tanggal dan `--min-level`, plus jumlah sampel tiap sel.
 - Bila waktu mepet, urutan pemotongan di [skema-evaluasi.md](skema-evaluasi.md) bagian 6: Presidio, lalu repo publik. **Jangan** potong pembagian kalibrasi-uji, baseline, D2, dan pytest.
@@ -412,4 +416,4 @@ Bukan tanda rencana gagal. Ini bagian yang paling mungkin diputuskan ulang saat 
 | 9 | Perilaku `--json` tanpa `--output`, urutan temuan | Tes JSON, keterulangan |
 | 10 | Kolom label, bidang pertama | Skrip pemeriksa data |
 
-**Yang tidak boleh berubah diam-diam setelah data dibuat:** cakupan jenis data (, ), dan aturan beku setelah data uji dijalankan ().
+**Yang tidak boleh berubah diam-diam setelah data dibuat:** cakupan jenis data (NIK, HP, email per domain), dan aturan beku setelah data uji dijalankan.

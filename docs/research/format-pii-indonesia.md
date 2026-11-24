@@ -63,9 +63,11 @@ NIK terdiri dari 16 digit [5].
 | Bulan (MM) | Ya | 01–12 |
 | Tahun (YY) | Tidak | Dua digit, abad tidak diketahui |
 | Nomor urut | Tidak | Tidak ada aturan di [5] |
-| Checksum | **Tidak ada** | Tidak ada digit pemeriksa yang dikenal ⚠️ |
+| Checksum | **Tidak ada** | Pasal 31 ayat (1) huruf c [5]: 4 digit terakhir adalah nomor urut penerbitan yang diproses otomatis dengan SIAK. Tidak ada digit pemeriksa yang disebut |
 
 "Format sah" di dokumen ini berarti digit 7–12 bisa terbaca sebagai tanggal dan bulan. Itu bukan berarti tanggalnya benar milik seseorang.
+
+**Penulisan NIK:** Pasal 31 ayat (2) [5] hanya menyebut 16 digit "diletakkan secara mendatar" (dicek ke PDF, 24 Nov 2026). Itu aturan tata letak. Pasal itu **tidak menyebut pemisah** (spasi, strip, titik), jadi PRISM yang hanya mengenali 16 digit berurutan adalah keputusan penyusun, bukan ketentuan hukum. Pasal 32 ayat (4) (NIK WNI di luar negeri: dua digit pertama `99`, lalu 3 digit kode negara dan 1 digit kode perwakilan) memakai kalimat yang sama.
 
 ### 2.3 Peluang lolos kebetulan dan tingkat bukti
 
@@ -213,7 +215,7 @@ Semua peraturan di bawah dibaca langsung dari sumber resmi.
 - NDC seluler dialokasikan pada kelompok nomor **A = 8**, bentuknya `8BC` (hlm. 38).
 - Panjang nomor pelanggan diatur masing-masing penyelenggara, dengan batas panjang maksimum N(S)N-Mobil (hlm. 38).
 - Batas dari ITU-T E.164: nomor internasional maksimum 15 digit, kode negara Indonesia 2 digit, jadi N(S)N sampai 13 digit (hlm. 19).
-- **Tidak ditetapkan:** jumlah digit nomor pelanggan yang pasti dan prefiks per operator. Alokasi NDC per operator belum saya baca ⚠️ dan bisa berubah.
+- **Tidak ditetapkan:** jumlah digit nomor pelanggan yang pasti dan prefiks per operator. Dicek ke PDF pada 24 Nov 2026: Tabel II.3 sampai II.14 di bagian Ikhtisar Peruntukan Nomor tidak memuat alokasi NDC per operator, dan tidak ada nama operator di dokumen. Tabel II.9 (halaman PDF 46, cetak 40) hanya memuat struktur: `08XY` dengan X≠0,6 dan `086X` dengan X≠1 sebagai NDC, `0861x` sebagai kode akses data paket, `0801`–`0809` sebagai layanan Intelligent Network. Status perubahan sesudah 2018 belum dicek ⚠️.
 
 Ikhtisar Peruntukan Nomor [25] (hlm. 40 dokumen):
 
@@ -259,8 +261,8 @@ Ikhtisar Peruntukan Nomor [25] (hlm. 40 dokumen):
 ### 6.5 Data uji dan hal yang belum diketahui
 
 - Pola Faker id_ID [27] tidak cocok untuk data uji HP. Beberapa polanya (`+62-0##-###-####`, `08# ### ####`) bisa menghasilkan nomor yang tidak sah menurut [26]. Buat generator sendiri.
-- ⚠️ Isi tabel alokasi NDC per operator [25] dan status perubahannya sesudah 2018.
-- ⚠️ Panjang nomor pelanggan resmi. Batas atasnya mungkin lebih ketat daripada 13 digit.
+- Alokasi NDC per operator **tidak ada** di [25] (dicek 24 Nov 2026). Status perubahan sesudah 2018 belum dicek ⚠️.
+- Panjang nomor pelanggan resmi **tidak ditetapkan** [25]. Batas atas 13 digit setelah `62` dari E.164, batas bawah dan atas praktis (9–12 digit setelah `8`) tetap hipotesis dari [26] ⚠️.
 - ⚠️ Sebaran bentuk HP di database nyata Indonesia.
 
 ## 7. Email

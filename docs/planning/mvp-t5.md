@@ -1051,6 +1051,8 @@ Kerjakan **berurutan**. Tiap langkah punya hasil yang harus ada sebelum lanjut. 
 
 **Langkah 1. Verifikasi format PII dari sumber resmi** (±75 menit)
 
+**Status: selesai 24 Nov. 2026.** Format NIK (PP 40/2019 Pasal 31–32), HP (Permenkominfo 14/2018), dan wilayah (Kepmendagri 2430/2025) sudah bersumber. Sisa yang tidak menghalangi: batas panjang HP tetap hipotesis (regulasi tidak menetapkan), dan keputusan wilayah baru setelah 2025 belum dicek.
+
 Memenuhi: KF-07, KF-08, KF-09 (dasar format).
 - Kerjakan:
   - Cari format NIK: struktur 16 digit, kode wilayah, tanggal lahir (+40 untuk perempuan), daftar kode provinsi.
@@ -1062,6 +1064,8 @@ Memenuhi: KF-07, KF-08, KF-09 (dasar format).
 - Cek berhasil: setiap angka dan aturan punya sumber.
 
 **Langkah 2. Pahami pipeline: workflow merah dan hijau** (±45 menit)
+
+**Status: selesai 24 Nov. 2026.** Job merah (`exit 1`) dan hijau (`exit 0`) sudah terlihat di GitHub Actions, tangkapan layar diambil penyusun. Workflow sementara ada di cabang `langkah-2-workflow`, akan diganti di langkah 12.
 
 Memenuhi: KF-22, KF-23.
 - Kerjakan:
