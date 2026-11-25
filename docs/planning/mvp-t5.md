@@ -1110,6 +1110,8 @@ Memenuhi: KF-03, KF-04, KF-05, KF-06.
 
 **Langkah 5. Rule pertama: NIK dengan regex saja** (±45 menit)
 
+**Status: selesai 25 Nov. 2026.** `rules.py`, `engine.py`, `report.py` (baru), `cli.py` diperbarui, tes: `test_rules.py`, `test_engine.py`, `test_report.py`, tambahan di `test_cli.py` (76 tes hijau seluruhnya). Keputusan yang ditetapkan: kolom dihitung mulai 1 (seperti editor). Huruf di depan atau belakang 16 digit tidak menghalangi (`abc3171011503900001` tetap kandidat), batas hanya menolak digit. NIK dengan spasi, titik, atau strip tidak terdeteksi, didokumentasikan lewat tes. `assess_nik` sementara mengembalikan `low` untuk semua, penilaian KF-11 dikerjakan di langkah 6. Exit code sudah lengkap: 2 (error baca, didahulukan), 1 (ada temuan), 0. Keluaran sementara: baris temuan `berkas:baris:kolom  rule  tingkat  nilai-mask`, lalu ringkasan dan `Temuan: N`. Format akhir (3.2.2) dikerjakan di langkah 9. `Temuan.nilai` memakai `repr=False` supaya nilai utuh tidak bocor lewat `repr`.
+
 Memenuhi: KF-07, awal KF-20 dan KF-21.
 - Kerjakan di `rules.py` dan `engine.py`:
   - Buat dataclass `Rule(id, regex, assess, context)`, dengan `assess(nilai)` mengembalikan `high`, `medium`, atau `low`.

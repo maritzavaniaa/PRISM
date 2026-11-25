@@ -1,16 +1,20 @@
-"""Antarmuka baris perintah PRISM (langkah 4: penelusuran folder dan ringkasan).
+"""Antarmuka baris perintah PRISM (langkah 5: temuan NIK dan exit code).
 
-Exit code (KF-21): 0 bersih, 1 ada temuan, 2 gagal pindai atau salah pemakaian.
-Di langkah ini belum ada pencarian temuan, jadi hanya 0 dan 2 yang terpakai.
+Exit code (KF-21): 2 bila ada error pindai (didahulukan), jika tidak 1 bila ada
+temuan, jika tidak 0.
 """
 
 import argparse
 import os
 import sys
 
+from prism.engine import periksa_baris
+from prism.report import mask
+from prism.rules import RULES
 from prism.scanner import scan
 
 EXIT_OK = 0
+EXIT_TEMUAN = 1
 EXIT_ERROR = 2
 
 
@@ -38,18 +42,32 @@ def _scan(path: str, exclude) -> int:
         print(f"Error: path tidak ditemukan: {path}", file=sys.stderr)
         return EXIT_ERROR
 
-    hasil = scan(path, exclude=exclude)
+    temuan = []
+
+    def proses_baris(berkas, nomor, teks):
+        temuan.extend(periksa_baris(berkas, nomor, teks, RULES))
+
+    hasil = scan(path, exclude=exclude, proses_baris=proses_baris)
 
     for pesan in hasil.pesan_error:
         print(f"Error: {pesan}", file=sys.stderr)
+
+    # Hanya nilai yang sudah di-mask yang boleh sampai ke keluaran (KF-20).
+    for t in temuan:
+        print(f"{t.berkas}:{t.baris}:{t.kolom}  {t.rule_id}  {t.tingkat}  {mask(t.nilai)}")
 
     print(f"Berkas diperiksa: {hasil.berkas_diperiksa}")
     print(f"Berkas dilewati: {hasil.berkas_dilewati}")
     print(f"Berkas error: {hasil.berkas_error}")
     print(f"Baris dibaca: {hasil.baris_dibaca}")
     print(f"Baris lolos prefilter: {hasil.baris_lolos_prefilter}")
+    print(f"Temuan: {len(temuan)}")
 
-    return EXIT_ERROR if hasil.berkas_error else EXIT_OK
+    if hasil.berkas_error:
+        return EXIT_ERROR
+    if temuan:
+        return EXIT_TEMUAN
+    return EXIT_OK
 
 
 def main(argv=None) -> int:
