@@ -3,7 +3,7 @@
 > Keluaran langkah 1 di [mvp-t5.md](../planning/mvp-t5.md). **Fokus MVP: NIK (termasuk NPWP orang pribadi dan nomor KK), nomor HP, dan email.**
 > Bagian yang diparkir ada di [format-pii-parkir.md](format-pii-parkir.md).
 > Dasar hukum cakupan: [dasar-hukum-uu-pdp.md](dasar-hukum-uu-pdp.md). Semua sumber: [referensi.md](referensi.md).
-> Data kode wilayah: [data/reference/kode-wilayah/](../../data/reference/kode-wilayah/README.md).
+> Data kode wilayah: [src/prism/data/kode-wilayah/](../../src/prism/data/kode-wilayah/README.md).
 > ⚠️ = belum diverifikasi atau belum diuji. `[n]` = nomor sumber di referensi.md.
 > **Diperbarui:** 12 Nov 2026.
 
@@ -126,9 +126,9 @@ Kode wilayah mengikuti Kepmendagri 300.2.2-2138 Tahun 2025, diubah oleh Kepmenda
 
 | Berkas | Isi |
 |---|---|
-| [provinsi.csv](../../data/reference/kode-wilayah/provinsi.csv) | 38 baris |
-| [kabkota.csv](../../data/reference/kode-wilayah/kabkota.csv) | 514 baris |
-| [kecamatan.csv](../../data/reference/kode-wilayah/kecamatan.csv) | 7.285 baris |
+| [provinsi.csv](../../src/prism/data/kode-wilayah/provinsi.csv) | 38 baris |
+| [kabkota.csv](../../src/prism/data/kode-wilayah/kabkota.csv) | 514 baris |
+| [kecamatan.csv](../../src/prism/data/kode-wilayah/kecamatan.csv) | 7.285 baris |
 
 - **Terverifikasi** ke dokumen resmi [1]: 38 kode provinsi, serta jumlah kabupaten, kota, dan kecamatan per provinsi (Lampiran A).
 - **Belum** terverifikasi satu per satu: kode dan nama kabupaten/kota/kecamatan. Lampiran B dan C Kepmendagri 2138 tidak diperoleh.

@@ -2,7 +2,7 @@
 
 import pytest
 
-from prism.rules import LOW, NIK, POLA_NIK, RULES, assess_nik
+from prism.rules import NIK, POLA_NIK, RULES
 
 NIK_SINTETIS = "3171011503900001"
 
@@ -68,7 +68,6 @@ def test_rule_nik_terdaftar_dan_punya_kata_konteks():
     assert "nik" in NIK.context and "ktp" in NIK.context
 
 
-def test_assess_sementara_semua_low():
-    # SEMENTARA (langkah 5). Tes ini diganti tes tabel KF-11 di langkah 6.
-    assert assess_nik(NIK_SINTETIS) == LOW
-    assert assess_nik("1234567890123456") == LOW
+def test_pola_nik_hanya_digit_ascii():
+    # Digit Arab-Indic (Unicode) bukan NIK. Tanpa re.ASCII, \d akan mencocokkannya.
+    assert kandidat("\u0663\u0661\u0667\u0661\u0660\u0661\u0661\u0665\u0660\u0663\u0669\u0660\u0660\u0660\u0660\u0661") == []

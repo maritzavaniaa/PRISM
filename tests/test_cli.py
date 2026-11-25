@@ -145,7 +145,7 @@ def test_lokasi_temuan_berkas_baris_kolom(tmp_path):
 
     hasil = run_prism("scan", str(berkas))
 
-    assert f"{berkas}:3:10  nik  low  ************0001" in hasil.stdout
+    assert f"{berkas}:3:10  nik  high  ************0001" in hasil.stdout
 
 
 def test_berkas_bersih_exit_0(tmp_path):
@@ -184,3 +184,39 @@ def test_error_baca_didahulukan_atas_temuan_exit_2(tmp_path):
     assert hasil.returncode == 2
     assert "Temuan: 1" in hasil.stdout  # temuan tetap dilaporkan
     assert NIK_SINTETIS not in hasil.stdout
+
+
+# --- langkah 6: tingkat bukti end-to-end dan data wilayah (Gerbang 1) ---
+
+
+def test_tingkat_nik_di_keluaran_high_medium_low(tmp_path):
+    berkas = tmp_path / "data.txt"
+    berkas.write_text(
+        "3171011503900001\n3171991503900001\n1234567890123456\n", encoding="utf-8"
+    )
+
+    hasil = run_prism("scan", str(berkas))
+
+    assert hasil.returncode == 1
+    assert f"{berkas}:1:1  nik  high  ************0001" in hasil.stdout
+    assert f"{berkas}:2:1  nik  medium  ************0001" in hasil.stdout
+    assert f"{berkas}:3:1  nik  low  ************3456" in hasil.stdout
+    for utuh in ("3171011503900001", "3171991503900001", "1234567890123456"):
+        assert utuh not in hasil.stdout
+        assert utuh not in hasil.stderr
+
+
+def test_data_wilayah_hilang_exit_2_bukan_1(tmp_path, monkeypatch, capsys):
+    # Crash Python berkode 1 akan terbaca sebagai "ada temuan". Harus 2 dengan pesan jelas.
+    from prism import cli, wilayah
+
+    berkas = tmp_path / "data.txt"
+    berkas.write_text("3171011503900001\n", encoding="utf-8")
+    monkeypatch.setattr(wilayah, "FOLDER_BAWAAN", tmp_path / "tidak-ada")
+
+    kode = cli.main(["scan", str(berkas)])
+
+    keluar = capsys.readouterr()
+    assert kode == 2
+    assert "data kode wilayah" in keluar.err
+    assert keluar.out == ""

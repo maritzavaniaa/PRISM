@@ -20,7 +20,7 @@ Tujuan: paham gambaran besar, tanpa beban baru.
 
 - [ ] Baca `docs/planning/mvp-t5.md` bagian 1, 2, 3, dan 4 (40 mnt). Dokumen ini sekarang berbentuk SRS. Bagian 2 berisi diagram alur, bagian 3 daftar kebutuhan (KF dan KN), bagian 4 keputusan MVP.
 - [ ] Jawab pertanyaan 4 dan 8 di bagian 3, masing-masing 2 kalimat (15 mnt).
-- [ ] Commit dokumen yang belum ter-commit (10 mnt): `docs/research/`, `docs/planning/`, `data/reference/`, `.claude/`.
+- [ ] Commit dokumen yang belum ter-commit (10 mnt): `docs/research/`, `docs/planning/`, `src/prism/data/`, `.claude/`.
 
 **Hasil:** jawaban 4 dan 8 tertulis, dan semua dokumen ter-commit.
 
@@ -126,7 +126,7 @@ Kerjakan satu per satu kapan saja, 10–15 menit masing-masing. Urutan dari yang
 | 3 | NDC seluler `08XY`, 0804 dan 0809 bukan nomor pribadi | Permenkominfo 14/2018 [25] | PDF hlm 37–38, 46 |
 | 4 | NPWP orang pribadi = NIK | PMK 112/2022 [6] Pasal 2, PMK 81/2024 [8] Pasal 16 | pasal yang disebut |
 | 5 | Ulang hitungan Lampiran B dengan kalkulator | `format-pii-indonesia.md` Lampiran B | - |
-| 6 | Cocokkan jumlah provinsi, kabupaten, dan kecamatan dengan tabel resmi | Kepmendagri 2430 [1] vs `data/reference/kode-wilayah/` | tabel A di lampiran |
+| 6 | Cocokkan jumlah provinsi, kabupaten, dan kecamatan dengan tabel resmi | Kepmendagri 2430 [1] vs `src/prism/data/kode-wilayah/` | tabel A di lampiran |
 | 7 | Sumber yang saya baca lewat ringkasan alat fetch | [9], [10], [18], [19], [32], [36], [37]–[39], [43]–[45] | buka tautan di `referensi.md` |
 
 **Paling lemah, periksa dengan curiga:**

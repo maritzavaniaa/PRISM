@@ -1,7 +1,7 @@
 """Tes langkah 5: mesin rule (lokasi kandidat). Semua nilai sintetis."""
 
 from prism.engine import Temuan, periksa_baris
-from prism.rules import LOW, RULES
+from prism.rules import HIGH, RULES
 
 NIK_SINTETIS = "3171011503900001"
 
@@ -18,7 +18,7 @@ def test_lokasi_baris_dan_kolom_benar_dimulai_dari_1():
 
     assert (t.berkas, t.baris, t.kolom) == ("a.txt", 3, 10)
     assert t.rule_id == "nik"
-    assert t.tingkat == LOW
+    assert t.tingkat == HIGH
     assert t.nilai == NIK_SINTETIS
 
 
@@ -44,7 +44,7 @@ def test_repr_temuan_tidak_memuat_nilai_utuh():
 
 
 def test_temuan_tidak_bisa_diubah():
-    t = Temuan("a.txt", 1, 1, "nik", LOW, NIK_SINTETIS)
+    t = Temuan("a.txt", 1, 1, "nik", HIGH, NIK_SINTETIS)
 
     try:
         t.kolom = 2

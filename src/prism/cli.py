@@ -8,6 +8,7 @@ import argparse
 import os
 import sys
 
+from prism import wilayah
 from prism.engine import periksa_baris
 from prism.report import mask
 from prism.rules import RULES
@@ -40,6 +41,14 @@ def build_parser() -> argparse.ArgumentParser:
 def _scan(path: str, exclude) -> int:
     if not os.path.exists(path):
         print(f"Error: path tidak ditemukan: {path}", file=sys.stderr)
+        return EXIT_ERROR
+
+    # Data wilayah dimuat di awal. Bila hilang, keluar dengan 2: crash Python berkode 1
+    # akan terbaca sebagai "ada temuan".
+    try:
+        wilayah.pastikan_termuat()
+    except (OSError, ValueError) as e:
+        print(f"Error: data kode wilayah tidak bisa dimuat: {e}", file=sys.stderr)
         return EXIT_ERROR
 
     temuan = []

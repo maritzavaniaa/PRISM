@@ -120,7 +120,7 @@ Struktur dokumen mengikuti pola umum SRS: pendahuluan, deskripsi umum, lalu kebu
 | [format-pii-parkir.md](../research/format-pii-parkir.md) | Jenis data yang diparkir |
 | [dasar-hukum-uu-pdp.md](../research/dasar-hukum-uu-pdp.md) | Dasar hukum cakupan data |
 | [referensi.md](../research/referensi.md) | Semua sumber, format IEEE |
-| [kode-wilayah/README.md](../../data/reference/kode-wilayah/README.md) | Data kode provinsi dan kecamatan |
+| [kode-wilayah/README.md](../../src/prism/data/kode-wilayah/README.md) | Data kode provinsi dan kecamatan |
 
 ---
 
@@ -716,14 +716,14 @@ Perbedaan log job dan JSON:
 
 | Berkas | Isi | Dipakai oleh |
 |---|---|---|
-| `data/reference/kode-wilayah/provinsi.csv` | 38 kode provinsi (2 digit) | KF-11 |
-| `data/reference/kode-wilayah/kecamatan.csv` | 7.285 kode kecamatan (6 digit) | KF-11 |
-| `data/reference/kode-wilayah/kabkota.csv` | 514 kode kabupaten dan kota (4 digit) | Tidak dipakai di MVP |
-| Daftar domain email pribadi (13 domain awal di KF-13; nama dan lokasi berkas ditetapkan di langkah 7, di bawah `data/reference/`) | Satu domain per baris. Disusun sendiri ⚠️ tidak bersumber | KF-13 |
+| `src/prism/data/kode-wilayah/provinsi.csv` | 38 kode provinsi (2 digit) | KF-11 |
+| `src/prism/data/kode-wilayah/kecamatan.csv` | 7.285 kode kecamatan (6 digit) | KF-11 |
+| `src/prism/data/kode-wilayah/kabkota.csv` | 514 kode kabupaten dan kota (4 digit) | Tidak dipakai di MVP |
+| Daftar domain email pribadi (13 domain awal di KF-13; nama dan lokasi berkas ditetapkan di langkah 7, di bawah `src/prism/data/`) | Satu domain per baris. Disusun sendiri ⚠️ tidak bersumber | KF-13 |
 
 - Kolom: `kode` dan `nama`. Kode ditulis tanpa titik dan dibaca sebagai teks supaya angka nol di depan tidak hilang.
 - Dimuat sekali per pindai, bukan per baris.
-- Sumber, versi, dan hasil verifikasi: [kode-wilayah/README.md](../../data/reference/kode-wilayah/README.md). Datanya wilayah administrasi, bukan data pribadi.
+- Sumber, versi, dan hasil verifikasi: [kode-wilayah/README.md](../../src/prism/data/kode-wilayah/README.md). Datanya wilayah administrasi, bukan data pribadi.
 
 ### 3.3 Kebutuhan non-fungsional
 
@@ -800,6 +800,9 @@ Perbedaan log job dan JSON:
 | Pindai gagal terbaca sebagai bersih | KF-21: exit code 2 terpisah dari 0 |
 | Action pihak ketiga (`setup-python`, `upload-artifact`) | Dicatat di alur 17 (E3, tidak digambar) di Lampiran A. Pin versi ⚠️ |
 | Repo berisi data uji PII sintetis yang ikut terpindai | KF-24: folder uji dikecualikan di CI |
+| Data wilayah (`src/prism/data/kode-wilayah/*.csv`) hilang di produksi: folder `src/prism/` disalin tanpa folder `data/`, atau berkas terhapus. Tanpa data, `provinsi_valid` dan `kecamatan_valid` selalu salah, semua NIK turun ke `low`, tidak dilaporkan pada ambang `medium`, dan job **hijau padahal PRISM buta** | Data ditaruh **di dalam paket** (langkah 6), jadi menyalin `src/prism/` membawa datanya. Berkas tidak ada, atau tidak bisa dibaca → PRISM keluar dengan **kode 2** dan pesan jelas sebelum memindai (`pastikan_termuat`). Tes: `test_data_wilayah_hilang_exit_2_bukan_1`, `test_data_bawaan_berada_di_dalam_paket_prism` |
+| Data wilayah **rusak**: kosong, tanpa kolom `kode`, atau berisi kode yang bukan digit dengan panjang benar | Ditolak dengan `ValueError`, exit 2. Himpunan kosong dilarang karena akan diam-diam menurunkan semua NIK. Tes: `test_muat_kode_menolak_*` |
+| Data wilayah rusak **tapi masih tampak sah**: terpotong (baris berkurang), berkas lama terbawa, atau isinya diubah | **Belum terdeteksi.** PRISM hanya memeriksa bentuk tiap kode, bukan kelengkapannya. Hasilnya NIK sah turun dari `high` ke `medium`, bukan hilang. Lihat 5.2 |
 | Berkas non-UTF-8 atau sangat besar membuat temuan terlewat | Dihitung sebagai dilewati dan dilaporkan di ringkasan (KF-04, KF-05) |
 | CI hanya mendeteksi. PII sudah ter-push saat job berjalan, dan tetap ada di riwayat git | Di luar cakupan. Memperbaiki lewat commit baru tidak menghapus riwayat |
 | Data uji dibuat dengan aturan yang sama dengan yang diuji, sehingga precision bisa terlihat terlalu bagus ⚠️ (ditambahkan saat dokumen ini dirapikan) | Dicatat sebagai keterbatasan. Rancangan evaluasi yang tidak sirkular disusun di [cek-dan-belajar.md](cek-dan-belajar.md) |
@@ -818,6 +821,8 @@ Perbedaan log job dan JSON:
 - **`--json` tanpa `--output`** belum ditentukan perilakunya.
 - **Kandidat `medium` yang dibuang pada `--min-level high`** tidak terhitung di ringkasan (hanya `low` yang terhitung).
 - **Urutan temuan di log** belum ditentukan secara tegas.
+- **Keutuhan data wilayah di produksi.** Pemeriksaan sekarang hanya menangkap berkas hilang, kosong, atau berbentuk salah. Berkas yang terpotong atau lama tetap lolos. Pilihan penguat (belum dipilih): (a) simpan jumlah minimum kode di kode (provinsi ≥ 38, kecamatan ≥ 7.000), (b) simpan SHA-256 tiap CSV dan tolak bila berbeda (aman, tapi tiap pembaruan data harus mengubah dua tempat), (c) tidak menambah apa pun dan dicatat sebagai batasan. Usulan: (b) bila ada waktu, jika tidak (c). Dengan (c), akibat terburuknya `high` turun jadi `medium` (masih dilaporkan), bukan hilang.
+- **PRISM belum bisa dipasang sebagai paket** (`pip install`). Tidak ada `pyproject.toml` dan pengaturan *package data*, jadi yang tersedia hanya menjalankan dari checkout atau menyalin seluruh `src/prism/`. Di luar lingkup MVP, ditulis di jurnal sebagai batasan.
 - **Batas 1 MB** untuk berkas belum diuji.
 - **Versi GitHub Actions** perlu dicek ke dokumentasi resmi sebelum dipin.
 - **Rujukan untuk metode mask** belum ada di referensi.md.
@@ -1032,6 +1037,7 @@ PRISM/
 │   ├── scanner.py         # telusuri folder, prefilter, baca berkas
 │   ├── rules.py           # isi rule NIK, HP, email: regex, fungsi assess, kata konteks
 │   ├── engine.py          # menjalankan rule: regex, memanggil assess, konteks, ambang, dedup
+│   ├── wilayah.py         # memuat kode provinsi dan kecamatan dari CSV (langkah 6)
 │   └── report.py          # mask, teks, JSON
 ├── tests/                 # test_rules.py, test_engine.py, test_report.py, test_cli.py
 ├── data/synthetic/        # data uji sintetis
@@ -1124,9 +1130,11 @@ Memenuhi: KF-07, awal KF-20 dan KF-21.
 
 **Langkah 6. Penilaian bukti NIK** (±75 menit)
 
+**Status: selesai 25 Nov. 2026.** `assess_nik` (KF-11) dan tiga pemeriksa (`tanggal_valid`, `provinsi_valid`, `kecamatan_valid`) ada di `rules.py`. `wilayah.py` baru memuat dua CSV sekali per proses (`lru_cache`). Tes: `tests/test_nik_assess.py` baru, tambahan di `test_cli.py`, `test_rules.py` (110 tes hijau seluruhnya). Yang ditetapkan di langkah ini: (1) data wilayah dimuat di awal pindai, dan bila hilang atau rusak PRISM keluar dengan kode 2 (crash Python berkode 1 akan terbaca sebagai "ada temuan"); (2) `POLA_NIK` memakai `re.ASCII`, karena `\d` tanpa itu juga mencocokkan digit Unicode seperti Arab-Indic; (3) CSV kosong atau tanpa kolom `kode` ditolak, supaya himpunan kosong tidak diam-diam menurunkan semua NIK; (4) hari 40 (di antara rentang laki-laki dan perempuan) ditolak. Tes memastikan setiap kode kecamatan berada di provinsi yang terdaftar. Data wilayah dipindahkan dari `data/reference/` ke `src/prism/data/kode-wilayah/` (satu paket dengan kode) dan loader menolak kode yang bukan digit berpanjang benar; risiko produksi di 5.1 dan 5.2. **Gerbang 1 tercapai:** `prism scan` pada berkas NIK sintetis mencetak lokasi, tingkat, nilai ter-mask, exit 1. Pengecekan tangan terhadap sumber resmi: `317101` = Gambir dan `31` = DKI Jakarta di CSV, kode itu berasal dari Kepmendagri 2430/2025 (lihat format-pii-indonesia.md bagian 3).
+
 Memenuhi: KF-11.
 - Kerjakan:
-  - Muat `provinsi.csv` dan `kecamatan.csv` dari `data/reference/kode-wilayah/` (kolom `kode`, `nama`) menjadi himpunan kode.
+  - Muat `provinsi.csv` dan `kecamatan.csv` dari `src/prism/data/kode-wilayah/` (kolom `kode`, `nama`) menjadi himpunan kode.
   - Buat tiga pemeriksa kecil:
     - `tanggal_valid(nilai)`: digit 7–8 bernilai 01–31 (laki-laki) atau 41–71 (perempuan), digit 9–10 bulan 01–12, jumlah hari sesuai bulan (29 Februari diterima).
     - `provinsi_valid(nilai)`: 2 digit pertama ada di daftar provinsi.
@@ -1142,7 +1150,7 @@ Memenuhi: KF-08, KF-09, KF-12, KF-13.
 - Kerjakan:
   - **HP:** `(?:\+62|62|0)?8[1-9]\d{7,10}` (awalan opsional agar bentuk tanpa `0` dikenali, keputusan 24 Nov. 2026; digit kedua `1`–`9` menurut Permenkominfo 14/2018, panjang 9–12 digit setelah awalan menurut metadata komunitas ⚠️; dasar di `format-pii-indonesia.md` bagian 6) dengan pemisah opsional (spasi, `-`, atau `.`) di antara kelompok digit dan batas bukan-digit di kiri dan kanan (`(?<!\d)` dan `(?!\d)`). Kata konteks: lihat KF-14.
   - **Email:** subset praktis RFC 5322 (lihat `format-pii-indonesia.md` bagian 7): local-part maksimum 64 karakter, domain maksimum 255, TLD minimal 2 huruf. Kata konteks: lihat KF-14.
-  - **Tingkat bukti HP dan email:** ikuti KF-12 dan KF-13 (bagian 3.1). Keduanya disetujui sebagai hipotesis (24 Nov. 2026). Daftar domain email disimpan sebagai berkas data di `data/reference/`, bukan di dalam kode.
+  - **Tingkat bukti HP dan email:** ikuti KF-12 dan KF-13 (bagian 3.1). Keduanya disetujui sebagai hipotesis (24 Nov. 2026). Daftar domain email disimpan sebagai berkas data di `src/prism/data/`, bukan di dalam kode.
   - Sesuaikan semua regex dengan hasil langkah 1.
 - Cek berhasil: satu berkas uji berisi tiap jenis terdeteksi dengan jenis dan tingkat yang benar.
 
