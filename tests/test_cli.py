@@ -1,4 +1,4 @@
-"""Tes langkah 3: kerangka CLI (KF-01, KF-02, KN-08).
+"""Tes CLI (langkah 3: KF-01, KF-02, KN-08; langkah 4: ringkasan dan --exclude).
 
 Menjalankan `python -m prism` sungguhan lewat subprocess, supaya exit code,
 stdout, dan stderr diuji seperti yang dilihat CI.
@@ -30,7 +30,8 @@ def test_scan_berkas_ada_exit_0_dan_mencetak_jumlah_baris(tmp_path):
     hasil = run_prism("scan", str(berkas))
 
     assert hasil.returncode == 0
-    assert "3 baris" in hasil.stdout
+    assert "Baris dibaca: 3" in hasil.stdout
+    assert "Berkas diperiksa: 1" in hasil.stdout
     assert hasil.stderr == ""
 
 
@@ -41,7 +42,7 @@ def test_scan_berkas_kosong_0_baris(tmp_path):
     hasil = run_prism("scan", str(berkas))
 
     assert hasil.returncode == 0
-    assert "0 baris" in hasil.stdout
+    assert "Baris dibaca: 0" in hasil.stdout
 
 
 def test_scan_baris_terakhir_tanpa_newline_tetap_terhitung(tmp_path):
@@ -50,7 +51,7 @@ def test_scan_baris_terakhir_tanpa_newline_tetap_terhitung(tmp_path):
 
     hasil = run_prism("scan", str(berkas))
 
-    assert "2 baris" in hasil.stdout
+    assert "Baris dibaca: 2" in hasil.stdout
 
 
 def test_scan_path_tidak_ada_exit_2_pesan_di_stderr(tmp_path):
@@ -75,12 +76,32 @@ def test_scan_tanpa_path_exit_2():
     assert hasil.stdout == ""
 
 
-def test_scan_folder_sementara_exit_2(tmp_path):
-    # Perilaku sementara langkah 3. Diganti di langkah 4 (penelusuran folder).
+def test_scan_folder_mencetak_ringkasan_dan_exit_0(tmp_path):
+    (tmp_path / "a.txt").write_text("satu\ndua\n", encoding="utf-8")
+    (tmp_path / "sub").mkdir()
+    (tmp_path / "sub" / "b.txt").write_text("tiga\n", encoding="utf-8")
+
     hasil = run_prism("scan", str(tmp_path))
 
-    assert hasil.returncode == 2
-    assert "folder belum didukung" in hasil.stderr
+    assert hasil.returncode == 0
+    assert "Berkas diperiksa: 2" in hasil.stdout
+    assert "Berkas dilewati: 0" in hasil.stdout
+    assert "Berkas error: 0" in hasil.stdout
+    assert "Baris dibaca: 3" in hasil.stdout
+
+
+def test_exclude_bisa_diulang_dan_dihitung_dilewati(tmp_path):
+    for nama in ("a", "b", "c"):
+        (tmp_path / nama).mkdir()
+        (tmp_path / nama / "x.txt").write_text("isi\n", encoding="utf-8")
+
+    hasil = run_prism(
+        "scan", str(tmp_path), "--exclude", str(tmp_path / "a"), "--exclude", "b"
+    )
+
+    assert hasil.returncode == 0
+    assert "Berkas diperiksa: 1" in hasil.stdout
+    assert "Berkas dilewati: 2" in hasil.stdout
 
 
 def test_berkas_non_utf8_tidak_membuat_crash(tmp_path):
@@ -90,7 +111,7 @@ def test_berkas_non_utf8_tidak_membuat_crash(tmp_path):
     hasil = run_prism("scan", str(berkas))
 
     assert hasil.returncode == 0
-    assert "3 baris" in hasil.stdout
+    assert "Baris dibaca: 3" in hasil.stdout
 
 
 def test_python_yang_dipakai_adalah_3_13():

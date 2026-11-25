@@ -1094,6 +1094,8 @@ Memenuhi: KF-01, KF-02.
 
 **Langkah 4. Telusuri folder dan prefilter** (±75 menit)
 
+**Status: selesai 25 Nov. 2026.** `src/prism/scanner.py`, `cli.py` diperbarui, `tests/test_scanner.py` baru (44 tes hijau seluruhnya, Python 3.13 lewat `.venv`). Keputusan yang ditetapkan di langkah ini: berkas tepat 1.000.000 byte masih dipindai, lebih dari itu dilewati (batas inklusif). Symlink (berkas atau folder) tidak diikuti dan dihitung dilewati. `--exclude` dicocokkan sebagai path (relatif ke folder kerja atau ke folder yang dipindai), bukan sebagai nama folder di mana saja. Urutan: `os.walk` top-down dengan berkas dan subfolder diurutkan abjad. Ringkasan mencetak lima angka: berkas diperiksa, dilewati, error, baris dibaca, dan baris lolos prefilter (tambahan: "baris diperiksa" di spesifikasi dipecah dua supaya prefilter bisa dibuktikan). Exit code 2 bila ada berkas error (KF-05).
+
 Memenuhi: KF-03, KF-04, KF-05, KF-06.
 - Kerjakan di `scanner.py`:
   - Telusuri folder dengan `os.walk`.
