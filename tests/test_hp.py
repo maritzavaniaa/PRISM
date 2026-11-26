@@ -120,7 +120,9 @@ def test_batas_kanan_hanya_menolak_digit_yang_menempel():
 
 def test_rule_hp_terdaftar_dan_punya_kata_konteks():
     assert HP in RULES and HP.id == "hp"
-    assert set(HP.context) == {"hp", "telp", "telepon", "wa", "whatsapp", "kontak"}
+    assert set(HP.context) == {
+        "hp", "telp", "telepon", "wa", "whatsapp", "kontak", "phone", "mobile", "tel", "msisdn",
+    }  # fmt: skip
 
 
 def test_nik_berpemisah_bisa_menghasilkan_kandidat_hp_palsu():

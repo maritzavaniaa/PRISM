@@ -286,3 +286,25 @@ def test_ringkasan_sesuai_hitungan_manual_pada_folder_uji_kecil(tmp_path):
         hasil.baris_dibaca,
         hasil.baris_lolos_prefilter,
     ) == (2, 4, 0, 5, 2)
+
+
+# --- langkah 8: header CSV diteruskan tanpa prefilter ---
+
+
+def test_baris_pertama_csv_diteruskan_sebagai_header_walau_tanpa_digit(tmp_path):
+    (tmp_path / "a.csv").write_text("id,nama,nik\n1,Budi,1234567890123456\n", encoding="utf-8")
+    (tmp_path / "b.txt").write_text("id,nama,nik\n", encoding="utf-8")
+    header = []
+
+    scan(str(tmp_path), proses_header=lambda path, teks: header.append((os.path.basename(path), teks)))
+
+    assert header == [("a.csv", "id,nama,nik")]  # .txt bukan berjudul
+
+
+def test_header_tidak_dihitung_sebagai_baris_lolos_prefilter(tmp_path):
+    (tmp_path / "a.csv").write_text("nik\n1234567890123456\n", encoding="utf-8")
+
+    hasil = scan(str(tmp_path), proses_header=lambda path, teks: None)
+
+    assert hasil.baris_dibaca == 2
+    assert hasil.baris_lolos_prefilter == 1

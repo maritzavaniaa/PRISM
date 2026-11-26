@@ -12,6 +12,7 @@ BATAS_UKURAN_BYTE = 1_000_000  # berkas > batas ini dilewati; tepat 1.000.000 by
 UKURAN_CEK_BYTE_NOL = 1024
 MIN_DIGIT_PREFILTER = 8
 FOLDER_SELALU_DILEWATI = ".git"
+EKSTENSI_BERJUDUL = frozenset({".csv", ".tsv"})  # baris pertama diteruskan sebagai header (langkah 8)
 
 # Ekstensi biner umum (KF-04). Daftar ini penilaian penulis, bukan standar.
 EKSTENSI_BINER = frozenset(
@@ -76,17 +77,20 @@ def _alasan_dilewati(path: str) -> str | None:
     return None
 
 
-def _periksa_berkas(path: str, hasil: ScanResult, proses_baris) -> None:
+def _periksa_berkas(path: str, hasil: ScanResult, proses_baris, proses_header=None) -> None:
     try:
         if _alasan_dilewati(path) is not None:
             hasil.berkas_dilewati += 1
             return
         dibaca = 0
         lolos = 0
+        berjudul = proses_header is not None and os.path.splitext(path)[1].lower() in EKSTENSI_BERJUDUL
         with open(path, encoding="utf-8", errors="replace") as f:
             for nomor, teks in enumerate(f, start=1):
                 dibaca += 1
                 teks = teks.rstrip("\r\n")
+                if berjudul and nomor == 1:
+                    proses_header(path, teks)  # header tidak melewati prefilter: biasanya tanpa digit
                 if lolos_prefilter(teks):
                     lolos += 1
                     if proses_baris is not None:
@@ -109,16 +113,17 @@ def _folder_dikecualikan(root: str, exclude) -> set:
     return hasil
 
 
-def scan(path: str, exclude=(), proses_baris=None) -> ScanResult:
+def scan(path: str, exclude=(), proses_baris=None, proses_header=None) -> ScanResult:
     """Pindai satu berkas atau satu folder.
 
     proses_baris(path, nomor_baris, teks) dipanggil untuk tiap baris yang lolos
-    prefilter. Urutan penelusuran diurutkan abjad supaya hasil bisa diulang (KN-06).
+    prefilter. proses_header(path, teks) dipanggil untuk baris pertama berkas .csv dan .tsv,
+    tanpa prefilter. Urutan penelusuran diurutkan abjad supaya hasil bisa diulang (KN-06).
     """
     hasil = ScanResult()
 
     if not os.path.isdir(path):
-        _periksa_berkas(path, hasil, proses_baris)
+        _periksa_berkas(path, hasil, proses_baris, proses_header)
         return hasil
 
     dikecualikan = _folder_dikecualikan(path, exclude)
@@ -143,6 +148,6 @@ def scan(path: str, exclude=(), proses_baris=None) -> ScanResult:
         dirnames[:] = tersisa  # os.walk tidak masuk ke folder yang dibuang dari daftar
 
         for nama in filenames:
-            _periksa_berkas(os.path.join(dirpath, nama), hasil, proses_baris)
+            _periksa_berkas(os.path.join(dirpath, nama), hasil, proses_baris, proses_header)
 
     return hasil

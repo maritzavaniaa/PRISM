@@ -21,7 +21,10 @@ class Rule:
     id: str
     regex: re.Pattern
     assess: Callable[[str], str]  # nilai kandidat -> HIGH / MEDIUM / LOW
-    context: tuple = ()  # kata konteks, dipakai mulai langkah 8
+    context: tuple = ()  # kata konteks (huruf kecil), dipakai engine.ada_konteks (langkah 8)
+    # False: kata konteks tidak boleh menaikkan `low` jadi `medium`. Dipakai email: alamat di luar
+    # daftar domain pribadi sengaja tidak dilaporkan (keputusan penyusun, KF-13).
+    konteks_menaikkan_low: bool = True
 
 
 # NIK: tepat 16 digit berurutan yang tidak diapit digit lain (KF-07).
@@ -124,7 +127,7 @@ HP = Rule(
     id="hp",
     regex=POLA_HP,
     assess=assess_hp,
-    context=("hp", "telp", "telepon", "wa", "whatsapp", "kontak"),
+    context=("hp", "telp", "telepon", "wa", "whatsapp", "kontak", "phone", "mobile", "tel", "msisdn"),
 )
 
 
@@ -157,7 +160,13 @@ def assess_email(nilai: str) -> str:
     return MEDIUM if domain in domain_email.domain_pribadi() else LOW
 
 
-EMAIL = Rule(id="email", regex=POLA_EMAIL, assess=assess_email, context=("email", "surel", "mail"))
+EMAIL = Rule(
+    id="email",
+    regex=POLA_EMAIL,
+    assess=assess_email,
+    context=("email", "surel", "mail"),
+    konteks_menaikkan_low=False,
+)
 
 # Urutan daftar ini juga dipakai dedup saat tingkat dan panjang sama (KF-16).
 RULES = (NIK, HP, EMAIL)

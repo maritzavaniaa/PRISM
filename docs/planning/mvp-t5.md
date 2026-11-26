@@ -479,13 +479,17 @@ Kelima baris pertama punya bentuk yang sama di mata regex (16 digit). Hanya peni
 
 | ID | PRISM harus | Asal | Cara uji |
 |---|---|---|---|
-| KF-14 | menaikkan tingkat satu tingkat (`low` jadi `medium`, `medium` jadi `high`, `high` tetap) bila ada kata konteks di baris yang sama, dalam jarak ±40 karakter ⚠️ dari kandidat. Kata konteks (tanpa membedakan huruf besar kecil): NIK `nik`, `ktp`. HP `hp`, `telp`, `telepon`, `wa`, `whatsapp`, `kontak`. Email `email`, `surel`, `mail` | K-04 | Tes: NIK `low` dengan dan tanpa kata `nik`. HP dan email dengan dan tanpa kata konteks |
+| KF-14 | menaikkan tingkat satu tingkat (`low` jadi `medium`, `medium` jadi `high`, `high` tetap) bila ada kata konteks di baris yang sama, dalam jarak ±40 karakter ⚠️ dari kandidat. Kata konteks (tanpa membedakan huruf besar kecil, dicocokkan sebagai **kata utuh**): NIK `nik`, `ktp`. HP `hp`, `telp`, `telepon`, `wa`, `whatsapp`, `kontak`, `phone`, `mobile`, `tel`, `msisdn` (kata Inggris ditambah 26 Nov. 2026 karena nama field di kode dan basis data lazim berbahasa Inggris). Email `email`, `surel`, `mail`. Untuk berkas `.csv` dan `.tsv`, **judul kolom** tempat kandidat berada juga dibaca sebagai konteks (keputusan 26 Nov. 2026) | K-04 | Tes: NIK `low` dengan dan tanpa kata `nik`. HP dan email dengan dan tanpa kata konteks. CSV dengan dan tanpa judul kolom |
 | KF-15 | membuang kandidat yang tingkatnya di bawah `--min-level` (bawaan `medium`). Yang dibuang karena `low` dihitung sebagai `suppressed_low`, nilainya tidak dicetak | K-04, NFR-03 | Tes: tanpa kata konteks `low` dibuang dan terhitung. `--min-level low` melaporkan semuanya |
 | KF-16 | bila dua temuan beririsan, memilih tingkat tertinggi, lalu yang terpanjang, lalu urutan rule (NIK lebih dulu) | K-04, K-10 | Tes: dua rule mencocokkan rentang yang sama |
 
 **Cara kerja konteks (KF-14):**
 - **Urutan:** konteks dikerjakan **setelah** penilaian bukti dan **sebelum** ambang.
 - **Cara:** PRISM mencari kata petunjuk di baris yang sama, dalam jarak ±40 karakter dari kandidat, baik sebelum maupun sesudahnya. Bila ada, tingkat naik satu. `high` tetap `high`.
+- **Jendela:** 40 karakter tepat di kiri kandidat dan 40 tepat di kanannya. Sebuah kata hanya dihitung bila seluruhnya berada di dalam jendela. Isi kandidat sendiri tidak dibaca (local-part email `hp@…` bukan konteks).
+- **Kata utuh:** teks jendela dipecah menjadi kata dari huruf `a`–`z`. Garis bawah, strip, titik, spasi, angka, dan batas huruf kecil-besar (camelCase) menjadi pemisah. Jadi `no_hp`, `phone-number`, `phoneNumber`, `noHP`, `e-mail`, dan `hp2` terbaca, sedangkan `water` tidak memicu `wa` dan `nohp` (tanpa pemisah apa pun) tidak terbaca. Alasan: `wa` sebagai potongan akan cocok dengan banyak kata biasa ⚠️ keputusan penyusun.
+- **Judul kolom CSV:** untuk `.csv` dan `.tsv`, baris pertama dicatat sebagai header (tanpa prefilter, karena header biasanya tak berisi digit). Pembatas dipilih dari koma, titik koma, atau tab yang paling sering muncul di header. Kandidat dipetakan ke kolomnya dengan menghitung pembatas di luar tanda kutip, lalu judul kolom itu dibaca bersama jendela. Batas: sel bertanda kutip yang berisi baris baru tidak didukung, dan hanya baris pertama yang dianggap header.
+- **Email di luar daftar domain pribadi tidak dinaikkan oleh konteks** (keputusan 26 Nov. 2026, sejalan dengan KF-13: alamat perusahaan tidak dipedulikan). `email: info@pt-abc.co.id` tetap `low`. Email `medium` tetap bisa naik ke `high`.
 - **Contoh langkah demi langkah:** baris `nik: 3171011503900001`.
   1. Prefilter: 16 digit, lolos.
   2. Regex: kandidat `3171011503900001`.
@@ -537,7 +541,8 @@ Contoh: satu pindai menemukan tiga kandidat NIK sintetis: A `3171011503900001` (
 | Baris (sintetis) | Temuan sebelum dedup | Hasil | Alasan |
 |---|---|---|---|
 | `hp: 08123456789, email: budi@gmail.com` | HP `medium`, email `medium` | **2 temuan** | Tidak beririsan, jadi tidak ada yang dibuang |
-| `kontak: 08123456789@gmail.com` | HP `medium` (11 karakter), email `medium` (21 karakter), beririsan | **1 temuan: email** | Tingkat sama, email lebih panjang |
+| `08123456789@gmail.com` | HP `medium` (11 karakter), email `medium` (21 karakter), beririsan | **1 temuan: email** | Tingkat sama, email lebih panjang |
+| `kontak: 08123456789@gmail.com` | HP `high` (`kontak` menaikkan `medium`), email `medium`, beririsan | **1 temuan: HP** | Contoh asli di versi sebelumnya (tanpa menghitung bahwa `kontak` adalah kata konteks HP) mengira keduanya `medium`. Dikoreksi 26 Nov. 2026 saat tes ditulis |
 | `kontak: +6281234567890@gmail.com` | HP `high`, email `medium`, beririsan | **1 temuan: HP** ⚠️ | Tingkat didahulukan daripada panjang, jadi HP menang walau lebih pendek. Bila regex email menerima `+`. Perlu dilihat apakah ini wajar saat pengujian |
 
 #### D. Pelaporan
@@ -809,17 +814,17 @@ Perbedaan log job dan JSON:
 
 ### 5.2 Hal yang belum diputuskan atau diuji
 
-- **Tingkat bukti HP dan email** (KF-12, KF-13) disetujui 24 Nov. 2026 sebagai hipotesis. Daftar domain email dan tingkat bentuk HP tanpa awalan diuji di U5. Belum diputuskan: apakah kata konteks `email` berlaku untuk domain di luar daftar (usulan: tidak), dan pilihan (b)/(c) untuk `81234567890` polos.
+- **Tingkat bukti HP dan email** (KF-12, KF-13) disetujui 24 Nov. 2026 sebagai hipotesis. Daftar domain email dan tingkat bentuk HP tanpa awalan diuji di U5. Diputuskan 26 Nov. 2026 (langkah 8): kata konteks `email` **tidak** menaikkan email di luar daftar, dan `81234567890` polos tetap pilihan (a) (`low`), dengan perluasan: kata konteks berbahasa Inggris dan judul kolom CSV sebagai konteks.
 - **Format PII belum diverifikasi semua dari sumber resmi.** Langkah 6 dan 7 bergantung pada langkah 1.
 - **NIK yang ditulis dengan pemisah atau lewat ekspor CSV/Excel.** **Diputuskan 24 Nov. 2026:** tidak didukung. Regex tetap `\d{16}`, dan tes dengan pemisah memastikan 0 temuan. Angka yang terpotong spreadsheet juga tidak terdeteksi. Ditulis sebagai batasan. PP 40/2019 Pasal 31 ayat (2) hanya menyebut 16 digit "diletakkan secara mendatar" (dicek ke PDF, 24 Nov. 2026). Itu aturan tata letak dan **tidak menyebut pemisah**, jadi "tanpa pemisah" adalah pilihan penyusun, bukan ketentuan hukum. Jangan ditulis di jurnal sebagai dasar hukum.
 - **Tingkat tidak punya kalibrasi.** Tingkat mengurutkan bukti, bukan probabilitas. Ambang bawaan `medium` dan aturan "konteks naik satu tingkat" adalah hipotesis yang diuji di langkah 13.
-- **Konteks per baris tidak menjangkau judul kolom CSV.** Perlu diuji.
+- **Konteks hanya per baris, kecuali judul kolom CSV.** Judul bagian dokumen, judul kolom di baris atas selain `.csv` dan `.tsv`, atau label di baris sebelumnya tidak terbaca. Judul CSV hanya dari baris pertama, dan sel berkutip berisi baris baru tidak didukung. Efeknya diukur di langkah 13, termasuk HP tanpa angka nol di CSV.
 - **NIK asli dengan format salah** jatuh ke `low`. Seberapa sering terjadi belum diukur.
 - **Kode wilayah NIK asli bisa tidak ada di daftar 2025.** Diterima sebagai batasan, tidak diukur.
 - **NIK, NPWP orang pribadi, dan nomor KK berbentuk sama.** Semuanya dilaporkan sebagai `nik`. Diterima karena yang penting terdeteksi sebagai PII.
 - **Email di luar daftar domain pribadi** (termasuk `example.com` dan alamat SSH) diberi tingkat `low`, jadi tidak dilaporkan pada ambang bawaan. Data uji email positif memakai domain di dalam daftar agar label konsisten.
 - **`--json` tanpa `--output`** belum ditentukan perilakunya.
-- **Kandidat `medium` yang dibuang pada `--min-level high`** tidak terhitung di ringkasan (hanya `low` yang terhitung).
+- **Kandidat `medium` yang dibuang pada `--min-level high`** tidak terhitung di ringkasan (hanya `low` yang terhitung). Diputuskan 26 Nov. 2026 tetap seperti rumusan KF-15, dengan tes.
 - **Urutan temuan di log** belum ditentukan secara tegas.
 - **Keutuhan data wilayah di produksi.** Pemeriksaan sekarang hanya menangkap berkas hilang, kosong, atau berbentuk salah. Berkas yang terpotong atau lama tetap lolos. Pilihan penguat (belum dipilih): (a) simpan jumlah minimum kode di kode (provinsi ≥ 38, kecamatan ≥ 7.000), (b) simpan SHA-256 tiap CSV dan tolak bila berbeda (aman, tapi tiap pembaruan data harus mengubah dua tempat), (c) tidak menambah apa pun dan dicatat sebagai batasan. Usulan: (b) bila ada waktu, jika tidak (c). Dengan (c), akibat terburuknya `high` turun jadi `medium` (masih dilaporkan), bukan hilang.
 - **PRISM belum bisa dipasang sebagai paket** (`pip install`). Tidak ada `pyproject.toml` dan pengaturan *package data*, jadi yang tersedia hanya menjalankan dari checkout atau menyalin seluruh `src/prism/`. Di luar lingkup MVP, ditulis di jurnal sebagai batasan.
@@ -1039,6 +1044,7 @@ PRISM/
 │   ├── engine.py          # menjalankan rule: regex, memanggil assess, konteks, ambang, dedup
 │   ├── wilayah.py         # memuat kode provinsi dan kecamatan dari CSV (langkah 6)
 │   ├── domain_email.py    # memuat daftar domain email pribadi dari berkas data (langkah 7)
+│   ├── csv_judul.py       # judul kolom CSV sebagai konteks (langkah 8)
 │   └── report.py          # mask, teks, JSON
 ├── tests/                 # test_rules.py, test_engine.py, test_report.py, test_cli.py
 ├── data/synthetic/        # data uji sintetis
@@ -1158,6 +1164,8 @@ Memenuhi: KF-08, KF-09, KF-12, KF-13.
 - Cek berhasil: satu berkas uji berisi tiap jenis terdeteksi dengan jenis dan tingkat yang benar.
 
 **Langkah 8. Konteks, ambang, dan dedup** (±75 menit)
+
+**Status: selesai 26 Nov. 2026.** `engine.py` (konteks, `terapkan_ambang`, `hapus_duplikat`), `csv_judul.py` (baru), `scanner.py` (callback header CSV), `cli.py` (`--min-level`, baris `Kandidat low tidak dilaporkan`), `rules.py` (kata konteks HP bahasa Inggris, `konteks_menaikkan_low`); tes di `test_engine.py`, `test_csv_judul.py` (baru), tambahan di `test_cli.py` dan `test_scanner.py` (269 tes hijau seluruhnya). Urutan proses terbukti lewat tes: bukti, lalu konteks, lalu ambang, lalu dedup (NIK `low` berkata `nik` tetap dilaporkan pada ambang bawaan). Keputusan: (1) kata konteks dicocokkan sebagai kata utuh, camelCase dan pemisah dipecah (`no_hp`, `phoneNumber` terbaca, `water` tidak memicu `wa`); (2) HP ditambah `phone`, `mobile`, `tel`, `msisdn`; (3) judul kolom CSV dan TSV dibaca sebagai konteks; (4) `email` di luar daftar domain tidak dinaikkan konteks; (5) `medium` yang dibuang pada `--min-level high` tidak dihitung; (6) `81234567890` polos tetap `low`, terlaporkan hanya dengan kata konteks atau judul kolom. Contoh dedup `kontak: 08123456789@gmail.com` di KF-16 dikoreksi: `kontak` menaikkan HP ke `high`, jadi HP menang, bukan email. Format keluaran `Kandidat low tidak dilaporkan: N` sementara, bentuk akhir di langkah 9. Mengubah KF-14 yang sudah disetujui (kata konteks Inggris, judul CSV) atas permintaan penyusun, perlu dicatat di jurnal sebagai perubahan spesifikasi.
 
 Memenuhi: KF-14, KF-15, KF-16.
 - Kerjakan di `engine.py`:

@@ -9,9 +9,10 @@ import os
 import sys
 
 from prism import domain_email, wilayah
-from prism.engine import periksa_baris
+from prism.csv_judul import JudulCsv
+from prism.engine import hapus_duplikat, periksa_baris, terapkan_ambang
 from prism.report import mask
-from prism.rules import RULES
+from prism.rules import LOW, MEDIUM, HIGH, RULES
 from prism.scanner import scan
 
 EXIT_OK = 0
@@ -35,10 +36,16 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="FOLDER",
         help="folder yang dilewati (boleh diulang)",
     )
+    pindai.add_argument(
+        "--min-level",
+        choices=[LOW, MEDIUM, HIGH],
+        default=MEDIUM,
+        help="tingkat terendah yang dilaporkan (bawaan: medium)",
+    )
     return parser
 
 
-def _scan(path: str, exclude) -> int:
+def _scan(path: str, exclude, min_level: str = MEDIUM) -> int:
     if not os.path.exists(path):
         print(f"Error: path tidak ditemukan: {path}", file=sys.stderr)
         return EXIT_ERROR
@@ -56,11 +63,20 @@ def _scan(path: str, exclude) -> int:
             return EXIT_ERROR
 
     temuan = []
+    low_dibuang = 0
+    judul_csv = JudulCsv()
 
     def proses_baris(berkas, nomor, teks):
-        temuan.extend(periksa_baris(berkas, nomor, teks, RULES))
+        # Urutan KF-14 sampai KF-16: bukti dan konteks, lalu ambang, lalu dedup.
+        nonlocal low_dibuang
+        kandidat = periksa_baris(
+            berkas, nomor, teks, RULES, judul_kolom=lambda posisi: judul_csv.judul_di(berkas, teks, posisi)
+        )
+        lolos, dibuang = terapkan_ambang(kandidat, min_level)
+        low_dibuang += dibuang
+        temuan.extend(hapus_duplikat(lolos, RULES))
 
-    hasil = scan(path, exclude=exclude, proses_baris=proses_baris)
+    hasil = scan(path, exclude=exclude, proses_baris=proses_baris, proses_header=judul_csv.catat_header)
 
     for pesan in hasil.pesan_error:
         print(f"Error: {pesan}", file=sys.stderr)
@@ -75,6 +91,7 @@ def _scan(path: str, exclude) -> int:
     print(f"Baris dibaca: {hasil.baris_dibaca}")
     print(f"Baris lolos prefilter: {hasil.baris_lolos_prefilter}")
     print(f"Temuan: {len(temuan)}")
+    print(f"Kandidat low tidak dilaporkan: {low_dibuang}")
 
     if hasil.berkas_error:
         return EXIT_ERROR
@@ -86,5 +103,5 @@ def _scan(path: str, exclude) -> int:
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "scan":
-        return _scan(args.path, args.exclude)
+        return _scan(args.path, args.exclude, args.min_level)
     return EXIT_ERROR  # tidak tercapai: subperintah wajib

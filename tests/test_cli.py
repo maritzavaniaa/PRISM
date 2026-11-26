@@ -195,7 +195,7 @@ def test_tingkat_nik_di_keluaran_high_medium_low(tmp_path):
         "3171011503900001\n3171991503900001\n1234567890123456\n", encoding="utf-8"
     )
 
-    hasil = run_prism("scan", str(berkas))
+    hasil = run_prism("scan", str(berkas), "--min-level", "low")
 
     assert hasil.returncode == 1
     assert f"{berkas}:1:1  nik  high  ************0001" in hasil.stdout
@@ -225,28 +225,155 @@ def test_data_wilayah_hilang_exit_2_bukan_1(tmp_path, monkeypatch, capsys):
 # --- langkah 7: HP dan email end-to-end ---
 
 
-def test_satu_berkas_berisi_nik_hp_dan_email(tmp_path):
+def test_satu_berkas_berisi_nik_hp_dan_email_tingkat_dasar(tmp_path):
+    # Tanpa kata konteks, jadi yang terlihat adalah tingkat bukti murni. --min-level low agar low ikut tampil.
     berkas = tmp_path / "campuran.txt"
     berkas.write_text(
-        "nik: 3171011503900001\n"
-        "hp: +62 812-3456-7890\n"
-        "hp: 081234567890\n"
-        "hp: 81234567890\n"
-        "email: budi@gmail.com\n"
-        "repo: git@github.com:user/repo.git\n",
+        "3171011503900001\n"
+        "+62 812-3456-7890\n"
+        "081234567890\n"
+        "81234567890\n"
+        "budi@gmail.com\n"
+        "git@github.com:user/repo.git\n",
         encoding="utf-8",
+    )
+
+    hasil = run_prism("scan", str(berkas), "--min-level", "low")
+
+    assert hasil.returncode == 1
+    assert f"{berkas}:1:1  nik  high  ************0001" in hasil.stdout
+    assert f"{berkas}:2:1  hp  high  *************7890" in hasil.stdout
+    assert f"{berkas}:3:1  hp  medium  ********7890" in hasil.stdout
+    assert f"{berkas}:4:1  hp  low  *******7890" in hasil.stdout
+    assert f"{berkas}:5:1  email  medium  ****@gmail.com" in hasil.stdout
+    assert f"{berkas}:6:1  email  low  ***@github.com" in hasil.stdout
+    assert "Temuan: 6" in hasil.stdout
+    for utuh in ("3171011503900001", "081234567890", "budi@", "812-3456-7890"):
+        assert utuh not in hasil.stdout
+        assert utuh not in hasil.stderr
+
+
+# --- langkah 8: konteks, ambang, dedup, judul CSV ---
+
+
+def test_ambang_bawaan_medium_membuang_low_dan_menghitungnya(tmp_path):
+    berkas = tmp_path / "a.txt"
+    berkas.write_text(
+        "3171011503900001\n3171991503900001\n1234567890123456\n", encoding="utf-8"
     )
 
     hasil = run_prism("scan", str(berkas))
 
     assert hasil.returncode == 1
-    assert f"{berkas}:1:6  nik  high  ************0001" in hasil.stdout
-    assert f"{berkas}:2:5  hp  high  *************7890" in hasil.stdout
-    assert f"{berkas}:3:5  hp  medium  ********7890" in hasil.stdout
-    assert f"{berkas}:4:5  hp  low  *******7890" in hasil.stdout
-    assert f"{berkas}:5:8  email  medium  ****@gmail.com" in hasil.stdout
-    assert f"{berkas}:6:7  email  low  ***@github.com" in hasil.stdout
-    assert "Temuan: 6" in hasil.stdout
-    for utuh in ("3171011503900001", "081234567890", "budi@", "812-3456-7890"):
-        assert utuh not in hasil.stdout
-        assert utuh not in hasil.stderr
+    assert "nik  high" in hasil.stdout and "nik  medium" in hasil.stdout
+    assert "nik  low" not in hasil.stdout
+    assert "Temuan: 2" in hasil.stdout
+    assert "Kandidat low tidak dilaporkan: 1" in hasil.stdout
+
+
+def test_hanya_low_pada_ambang_bawaan_exit_0(tmp_path):
+    # Hanya kandidat yang DILAPORKAN yang membuat exit 1.
+    berkas = tmp_path / "a.txt"
+    berkas.write_text("ref: 1234567890123456\n", encoding="utf-8")
+
+    bawaan = run_prism("scan", str(berkas))
+    rendah = run_prism("scan", str(berkas), "--min-level", "low")
+
+    assert bawaan.returncode == 0
+    assert "Temuan: 0" in bawaan.stdout and "Kandidat low tidak dilaporkan: 1" in bawaan.stdout
+    assert rendah.returncode == 1
+    assert "Kandidat low tidak dilaporkan: 0" in rendah.stdout
+
+
+def test_min_level_high_hanya_melaporkan_high(tmp_path):
+    berkas = tmp_path / "a.txt"
+    berkas.write_text("3171011503900001\n3171991503900001\n1234567890123456\n", encoding="utf-8")
+
+    hasil = run_prism("scan", str(berkas), "--min-level", "high")
+
+    assert "Temuan: 1" in hasil.stdout
+    assert "nik  high" in hasil.stdout
+    # Hanya low yang dihitung. medium yang dibuang pada ambang high tidak terhitung (keputusan langkah 8).
+    assert "Kandidat low tidak dilaporkan: 1" in hasil.stdout
+
+
+def test_min_level_tidak_valid_ditolak():
+    hasil = run_prism("scan", ".", "--min-level", "sedang")
+
+    assert hasil.returncode == 2
+    assert "invalid choice" in hasil.stderr
+
+
+def test_konteks_menaikkan_nik_low_sebelum_ambang(tmp_path):
+    # Urutan: konteks SEBELUM ambang. Bila ambang lebih dulu, baris pertama ikut terbuang.
+    berkas = tmp_path / "a.txt"
+    berkas.write_text("nik: 1234567890123456\nref: 1234567890123456\n", encoding="utf-8")
+
+    hasil = run_prism("scan", str(berkas))
+
+    assert f"{berkas}:1:6  nik  medium  ************3456" in hasil.stdout
+    assert f"{berkas}:2:" not in hasil.stdout
+    assert "Kandidat low tidak dilaporkan: 1" in hasil.stdout
+
+
+def test_judul_kolom_csv_menjadi_konteks(tmp_path):
+    berkas = tmp_path / "data.csv"
+    berkas.write_text(
+        "id,nama,nik,kota\n1,Budi,1234567890123456,Jakarta\n2,Ani,1234567890123456 ,Bandung\n"
+        "3,Cici,Jakarta,1234567890123456\n",
+        encoding="utf-8",
+    )
+
+    hasil = run_prism("scan", str(berkas))
+
+    assert f"{berkas}:2:8  nik  medium  ************3456" in hasil.stdout
+    assert f"{berkas}:3:7  nik  medium  ************3456" in hasil.stdout
+    assert f"{berkas}:4:" not in hasil.stdout  # kolom `kota`, bukan `nik`
+    assert "Kandidat low tidak dilaporkan: 1" in hasil.stdout
+
+
+def test_judul_kolom_csv_hp_tanpa_nol_dan_titik_koma(tmp_path):
+    # Excel berlokal Indonesia memakai titik koma. HP tanpa nol di depan hanya terlaporkan lewat judul kolom.
+    berkas = tmp_path / "pemohon.csv"
+    berkas.write_text(
+        "id;nama;Phone Number;catatan\n1;Budi;81234567890;ok\n2;Ani;ok;81234567890\n",
+        encoding="utf-8",
+    )
+
+    hasil = run_prism("scan", str(berkas))
+
+    assert f"{berkas}:2:8  hp  medium  *******7890" in hasil.stdout
+    assert f"{berkas}:3:" not in hasil.stdout
+    assert "Temuan: 1" in hasil.stdout
+
+
+def test_judul_bukan_csv_tidak_dibaca(tmp_path):
+    # Baris pertama berkas .txt bukan header, walau berisi kata nik.
+    berkas = tmp_path / "a.txt"
+    berkas.write_text("id,nama,nik,kota\n1,Budi,1234567890123456,Jakarta\n", encoding="utf-8")
+
+    hasil = run_prism("scan", str(berkas))
+
+    assert hasil.returncode == 0
+    assert "Kandidat low tidak dilaporkan: 1" in hasil.stdout
+
+
+def test_header_csv_tanpa_digit_tetap_dibaca(tmp_path):
+    # Header biasanya tidak lolos prefilter (tanpa digit), tetapi tetap harus dicatat.
+    berkas = tmp_path / "a.csv"
+    berkas.write_text("nik\n1234567890123456\n", encoding="utf-8")
+
+    hasil = run_prism("scan", str(berkas))
+
+    assert f"{berkas}:2:1  nik  medium" in hasil.stdout
+    assert "Baris lolos prefilter: 1" in hasil.stdout
+
+
+def test_dedup_di_keluaran_email_dengan_digit_hp(tmp_path):
+    berkas = tmp_path / "a.txt"
+    berkas.write_text("08123456789@gmail.com\n", encoding="utf-8")
+
+    hasil = run_prism("scan", str(berkas))
+
+    assert "Temuan: 1" in hasil.stdout
+    assert "email  medium  ***********@gmail.com" in hasil.stdout
