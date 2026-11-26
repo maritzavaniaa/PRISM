@@ -4,6 +4,7 @@ Menjalankan `python -m prism` sungguhan lewat subprocess, supaya exit code,
 stdout, dan stderr diuji seperti yang dilihat CI.
 """
 
+import json
 import os
 import subprocess
 import sys
@@ -25,35 +26,49 @@ def run_prism(*args):
     )
 
 
-def test_scan_berkas_ada_exit_0_dan_mencetak_jumlah_baris(tmp_path):
+@pytest.fixture
+def jalankan_json(tmp_path_factory):
+    """Jalankan PRISM dengan --json --output ke folder lain (bukan folder yang dipindai). Kembalikan (proses, laporan)."""
+
+    def _jalankan(*args):
+        keluaran = tmp_path_factory.mktemp("laporan") / "r.json"
+        hasil = run_prism(*args, "--json", "--output", str(keluaran))
+        laporan = json.loads(keluaran.read_text(encoding="utf-8")) if keluaran.exists() else None
+        return hasil, laporan
+
+    return _jalankan
+
+
+def test_scan_berkas_ada_exit_0_dan_mencetak_jumlah_baris(tmp_path, jalankan_json):
     berkas = tmp_path / "contoh.txt"
     berkas.write_text("satu\ndua\ntiga\n", encoding="utf-8")
 
-    hasil = run_prism("scan", str(berkas))
+    hasil, laporan = jalankan_json("scan", str(berkas))
 
     assert hasil.returncode == 0
-    assert "Baris dibaca: 3" in hasil.stdout
-    assert "Berkas diperiksa: 1" in hasil.stdout
+    assert laporan["scan"]["lines"] == 3
+    assert laporan["scan"]["files"] == 1
+    assert "Berkas: 1 diperiksa, 0 dilewati, 0 error" in hasil.stdout
     assert hasil.stderr == ""
 
 
-def test_scan_berkas_kosong_0_baris(tmp_path):
+def test_scan_berkas_kosong_0_baris(tmp_path, jalankan_json):
     berkas = tmp_path / "kosong.txt"
     berkas.write_text("", encoding="utf-8")
 
-    hasil = run_prism("scan", str(berkas))
+    hasil, laporan = jalankan_json("scan", str(berkas))
 
     assert hasil.returncode == 0
-    assert "Baris dibaca: 0" in hasil.stdout
+    assert laporan["scan"]["lines"] == 0
 
 
-def test_scan_baris_terakhir_tanpa_newline_tetap_terhitung(tmp_path):
+def test_scan_baris_terakhir_tanpa_newline_tetap_terhitung(tmp_path, jalankan_json):
     berkas = tmp_path / "tanpa_newline.txt"
     berkas.write_text("satu\ndua", encoding="utf-8")
 
-    hasil = run_prism("scan", str(berkas))
+    _, laporan = jalankan_json("scan", str(berkas))
 
-    assert "Baris dibaca: 2" in hasil.stdout
+    assert laporan["scan"]["lines"] == 2
 
 
 def test_scan_path_tidak_ada_exit_2_pesan_di_stderr(tmp_path):
@@ -78,42 +93,43 @@ def test_scan_tanpa_path_exit_2():
     assert hasil.stdout == ""
 
 
-def test_scan_folder_mencetak_ringkasan_dan_exit_0(tmp_path):
+def test_scan_folder_mencetak_ringkasan_dan_exit_0(tmp_path, jalankan_json):
     (tmp_path / "a.txt").write_text("satu\ndua\n", encoding="utf-8")
     (tmp_path / "sub").mkdir()
     (tmp_path / "sub" / "b.txt").write_text("tiga\n", encoding="utf-8")
 
-    hasil = run_prism("scan", str(tmp_path))
+    hasil, laporan = jalankan_json("scan", str(tmp_path))
 
     assert hasil.returncode == 0
-    assert "Berkas diperiksa: 2" in hasil.stdout
-    assert "Berkas dilewati: 0" in hasil.stdout
-    assert "Berkas error: 0" in hasil.stdout
-    assert "Baris dibaca: 3" in hasil.stdout
+    assert "Berkas: 2 diperiksa, 0 dilewati, 0 error" in hasil.stdout
+    assert laporan["scan"]["files"] == 2
+    assert laporan["scan"]["skipped"] == 0
+    assert laporan["scan"]["errors"] == 0
+    assert laporan["scan"]["lines"] == 3
 
 
-def test_exclude_bisa_diulang_dan_dihitung_dilewati(tmp_path):
+def test_exclude_bisa_diulang_dan_dihitung_dilewati(tmp_path, jalankan_json):
     for nama in ("a", "b", "c"):
         (tmp_path / nama).mkdir()
         (tmp_path / nama / "x.txt").write_text("isi\n", encoding="utf-8")
 
-    hasil = run_prism(
+    hasil, laporan = jalankan_json(
         "scan", str(tmp_path), "--exclude", str(tmp_path / "a"), "--exclude", "b"
     )
 
     assert hasil.returncode == 0
-    assert "Berkas diperiksa: 1" in hasil.stdout
-    assert "Berkas dilewati: 2" in hasil.stdout
+    assert "Berkas: 1 diperiksa, 2 dilewati, 0 error" in hasil.stdout
+    assert (laporan["scan"]["files"], laporan["scan"]["skipped"]) == (1, 2)
 
 
-def test_berkas_non_utf8_tidak_membuat_crash(tmp_path):
+def test_berkas_non_utf8_tidak_membuat_crash(tmp_path, jalankan_json):
     berkas = tmp_path / "biner.txt"
     berkas.write_bytes(b"halo\n\xff\xfe\nlagi\n")
 
-    hasil = run_prism("scan", str(berkas))
+    hasil, laporan = jalankan_json("scan", str(berkas))
 
     assert hasil.returncode == 0
-    assert "Baris dibaca: 3" in hasil.stdout
+    assert laporan["scan"]["lines"] == 3
 
 
 def test_python_yang_dipakai_adalah_3_13():
@@ -136,7 +152,7 @@ def test_berkas_dengan_nik_exit_1_dan_nilai_utuh_tidak_tercetak(tmp_path):
     assert NIK_SINTETIS not in hasil.stdout
     assert NIK_SINTETIS not in hasil.stderr
     assert "************0001" in hasil.stdout
-    assert "Temuan: 1" in hasil.stdout
+    assert "1 temuan (nik 1)." in hasil.stdout
 
 
 def test_lokasi_temuan_berkas_baris_kolom(tmp_path):
@@ -155,7 +171,7 @@ def test_berkas_bersih_exit_0(tmp_path):
     hasil = run_prism("scan", str(berkas))
 
     assert hasil.returncode == 0
-    assert "Temuan: 0" in hasil.stdout
+    assert "0 temuan." in hasil.stdout
 
 
 def test_folder_dengan_nik_di_subfolder_exit_1(tmp_path):
@@ -182,7 +198,9 @@ def test_error_baca_didahulukan_atas_temuan_exit_2(tmp_path):
         terkunci.chmod(0o644)
 
     assert hasil.returncode == 2
-    assert "Temuan: 1" in hasil.stdout  # temuan tetap dilaporkan
+    assert "1 temuan (nik 1)." in hasil.stdout  # temuan tetap dilaporkan
+    assert "Pindai tidak lengkap." in hasil.stdout
+    assert f"ERROR {terkunci}: tidak bisa dibaca" in hasil.stdout
     assert NIK_SINTETIS not in hasil.stdout
 
 
@@ -247,7 +265,7 @@ def test_satu_berkas_berisi_nik_hp_dan_email_tingkat_dasar(tmp_path):
     assert f"{berkas}:4:1  hp  low  *******7890" in hasil.stdout
     assert f"{berkas}:5:1  email  medium  ****@gmail.com" in hasil.stdout
     assert f"{berkas}:6:1  email  low  ***@github.com" in hasil.stdout
-    assert "Temuan: 6" in hasil.stdout
+    assert "6 temuan (nik 1, hp 3, email 2)." in hasil.stdout
     for utuh in ("3171011503900001", "081234567890", "budi@", "812-3456-7890"):
         assert utuh not in hasil.stdout
         assert utuh not in hasil.stderr
@@ -267,8 +285,8 @@ def test_ambang_bawaan_medium_membuang_low_dan_menghitungnya(tmp_path):
     assert hasil.returncode == 1
     assert "nik  high" in hasil.stdout and "nik  medium" in hasil.stdout
     assert "nik  low" not in hasil.stdout
-    assert "Temuan: 2" in hasil.stdout
-    assert "Kandidat low tidak dilaporkan: 1" in hasil.stdout
+    assert "2 temuan (nik 2)." in hasil.stdout
+    assert "Tidak dilaporkan: 1 kandidat low." in hasil.stdout
 
 
 def test_hanya_low_pada_ambang_bawaan_exit_0(tmp_path):
@@ -280,9 +298,9 @@ def test_hanya_low_pada_ambang_bawaan_exit_0(tmp_path):
     rendah = run_prism("scan", str(berkas), "--min-level", "low")
 
     assert bawaan.returncode == 0
-    assert "Temuan: 0" in bawaan.stdout and "Kandidat low tidak dilaporkan: 1" in bawaan.stdout
+    assert "0 temuan. Tidak dilaporkan: 1 kandidat low." in bawaan.stdout
     assert rendah.returncode == 1
-    assert "Kandidat low tidak dilaporkan: 0" in rendah.stdout
+    assert "Tidak dilaporkan: 0 kandidat low." in rendah.stdout
 
 
 def test_min_level_high_hanya_melaporkan_high(tmp_path):
@@ -291,10 +309,10 @@ def test_min_level_high_hanya_melaporkan_high(tmp_path):
 
     hasil = run_prism("scan", str(berkas), "--min-level", "high")
 
-    assert "Temuan: 1" in hasil.stdout
+    assert "1 temuan (" in hasil.stdout
     assert "nik  high" in hasil.stdout
     # Hanya low yang dihitung. medium yang dibuang pada ambang high tidak terhitung (keputusan langkah 8).
-    assert "Kandidat low tidak dilaporkan: 1" in hasil.stdout
+    assert "Tidak dilaporkan: 1 kandidat low." in hasil.stdout
 
 
 def test_min_level_tidak_valid_ditolak():
@@ -313,7 +331,7 @@ def test_konteks_menaikkan_nik_low_sebelum_ambang(tmp_path):
 
     assert f"{berkas}:1:6  nik  medium  ************3456" in hasil.stdout
     assert f"{berkas}:2:" not in hasil.stdout
-    assert "Kandidat low tidak dilaporkan: 1" in hasil.stdout
+    assert "Tidak dilaporkan: 1 kandidat low." in hasil.stdout
 
 
 def test_judul_kolom_csv_menjadi_konteks(tmp_path):
@@ -329,7 +347,7 @@ def test_judul_kolom_csv_menjadi_konteks(tmp_path):
     assert f"{berkas}:2:8  nik  medium  ************3456" in hasil.stdout
     assert f"{berkas}:3:7  nik  medium  ************3456" in hasil.stdout
     assert f"{berkas}:4:" not in hasil.stdout  # kolom `kota`, bukan `nik`
-    assert "Kandidat low tidak dilaporkan: 1" in hasil.stdout
+    assert "Tidak dilaporkan: 1 kandidat low." in hasil.stdout
 
 
 def test_judul_kolom_csv_hp_tanpa_nol_dan_titik_koma(tmp_path):
@@ -344,7 +362,7 @@ def test_judul_kolom_csv_hp_tanpa_nol_dan_titik_koma(tmp_path):
 
     assert f"{berkas}:2:8  hp  medium  *******7890" in hasil.stdout
     assert f"{berkas}:3:" not in hasil.stdout
-    assert "Temuan: 1" in hasil.stdout
+    assert "1 temuan (" in hasil.stdout
 
 
 def test_judul_bukan_csv_tidak_dibaca(tmp_path):
@@ -355,18 +373,18 @@ def test_judul_bukan_csv_tidak_dibaca(tmp_path):
     hasil = run_prism("scan", str(berkas))
 
     assert hasil.returncode == 0
-    assert "Kandidat low tidak dilaporkan: 1" in hasil.stdout
+    assert "Tidak dilaporkan: 1 kandidat low." in hasil.stdout
 
 
-def test_header_csv_tanpa_digit_tetap_dibaca(tmp_path):
+def test_header_csv_tanpa_digit_tetap_dibaca(tmp_path, jalankan_json):
     # Header biasanya tidak lolos prefilter (tanpa digit), tetapi tetap harus dicatat.
     berkas = tmp_path / "a.csv"
     berkas.write_text("nik\n1234567890123456\n", encoding="utf-8")
 
-    hasil = run_prism("scan", str(berkas))
+    hasil, laporan = jalankan_json("scan", str(berkas))
 
     assert f"{berkas}:2:1  nik  medium" in hasil.stdout
-    assert "Baris lolos prefilter: 1" in hasil.stdout
+    assert laporan["scan"]["lines_prefiltered"] == 1
 
 
 def test_dedup_di_keluaran_email_dengan_digit_hp(tmp_path):
@@ -375,5 +393,5 @@ def test_dedup_di_keluaran_email_dengan_digit_hp(tmp_path):
 
     hasil = run_prism("scan", str(berkas))
 
-    assert "Temuan: 1" in hasil.stdout
+    assert "1 temuan (" in hasil.stdout
     assert "email  medium  ***********@gmail.com" in hasil.stdout

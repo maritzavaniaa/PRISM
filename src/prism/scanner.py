@@ -97,7 +97,7 @@ def _periksa_berkas(path: str, hasil: ScanResult, proses_baris, proses_header=No
                         proses_baris(path, nomor, teks)
     except OSError as e:
         hasil.berkas_error += 1
-        hasil.pesan_error.append(f"gagal membaca {path}: {e.strerror}")
+        hasil.pesan_error.append(f"{path}: tidak bisa dibaca ({e.strerror})")
         return
     hasil.berkas_diperiksa += 1
     hasil.baris_dibaca += dibaca
@@ -130,7 +130,7 @@ def scan(path: str, exclude=(), proses_baris=None, proses_header=None) -> ScanRe
 
     def saat_error(e: OSError) -> None:
         hasil.berkas_error += 1
-        hasil.pesan_error.append(f"gagal membuka folder {e.filename}: {e.strerror}")
+        hasil.pesan_error.append(f"{e.filename}: folder tidak bisa dibuka ({e.strerror})")
 
     for dirpath, dirnames, filenames in os.walk(path, onerror=saat_error):
         dirnames.sort()

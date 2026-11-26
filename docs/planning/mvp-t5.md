@@ -596,7 +596,7 @@ Perintah: `PYTHONPATH=src python -m prism scan <path> [opsi]`
 | `--min-level {low,medium,high}` | Tingkat terendah yang dilaporkan | `medium` |
 | `--exclude <folder>` | Folder yang dilewati. Boleh diulang | Tidak ada |
 | `--json` | Tulis laporan JSON | Mati |
-| `--output <berkas>` | Berkas tujuan laporan JSON | ⚠️ Perilaku `--json` tanpa `--output` belum ditentukan |
+| `--output <berkas>` | Berkas tujuan laporan JSON | Wajib bersama `--json`. Salah satu tanpa yang lain ditolak dengan exit code 2 (keputusan 26 Nov. 2026) |
 
 | Exit code | Arti |
 |---|---|
@@ -625,7 +625,7 @@ Log job, dari atas ke bawah:
 1. Baris perintah `Run PYTHONPATH=src python -m prism scan ...`. Dicetak GitHub Actions, bukan PRISM.
 2. `Memindai: <path>`.
 3. `Berkas: N diperiksa, N dilewati, N error`.
-4. Satu baris per temuan: `berkas:baris:kolom  rule  tingkat  nilai-mask`. Bila ada error baca, barisnya `ERROR <berkas>: <sebab>`. ⚠️ Urutan antartemuan belum ditentukan, dan paling wajar mengikuti urutan penelusuran berkas.
+4. Satu baris per temuan: `berkas:baris:kolom  rule  tingkat  nilai-mask`. Bila ada error baca, barisnya `ERROR <berkas>: <sebab>`. Baris `ERROR` tercetak sebelum baris temuan, di stdout, supaya satu log berurutan (keputusan 26 Nov. 2026). Urutan antartemuan: berkas, lalu baris, lalu kolom (diurutkan menurut teks path, bukan urutan penelusuran).
 5. Satu baris ringkasan: jumlah temuan per jenis, jumlah `low` yang tidak dilaporkan, dan nama berkas JSON bila ada.
 6. `Error: Process completed with exit code N`. Dicetak GitHub Actions bila exit code bukan 0.
 
@@ -676,7 +676,7 @@ Error: Process completed with exit code 2.
 | `findings[].level` | `high`, `medium`, atau `low` (`low` hanya bila `--min-level low`) |
 | `findings[].location` | `file`, `line`, `column` |
 | `findings[].match.value` | Nilai yang sudah di-mask |
-| `scan` | Ringkasan: `mode` (`repo`), `files`, `skipped`, `lines`, `findings`, `suppressed_low`, `errors`, `min_level` |
+| `scan` | Ringkasan: `mode` (`repo`), `files`, `skipped`, `lines`, `lines_prefiltered`, `findings`, `findings_by_rule`, `suppressed_low`, `errors`, `min_level`. `lines_prefiltered` (baris yang lolos prefilter) dan `findings_by_rule` (jumlah per jenis, KF-19) ditambahkan 26 Nov. 2026 di luar contoh awal |
 
 `prism-report.json` untuk run pertama:
 
@@ -694,8 +694,9 @@ Error: Process completed with exit code 2.
      "location": {"file": "config/app.yaml", "line": 8, "column": 14},
      "match": {"value": "****@gmail.com"}}
   ],
-  "scan": {"mode": "repo", "files": 41, "skipped": 7, "lines": 1284,
-           "findings": 3, "suppressed_low": 2, "errors": 0, "min_level": "medium"}
+  "scan": {"mode": "repo", "files": 41, "skipped": 7, "lines": 1284, "lines_prefiltered": 96,
+           "findings": 3, "findings_by_rule": {"nik": 1, "hp": 1, "email": 1},
+           "suppressed_low": 2, "errors": 0, "min_level": "medium"}
 }
 ```
 
@@ -823,9 +824,9 @@ Perbedaan log job dan JSON:
 - **Kode wilayah NIK asli bisa tidak ada di daftar 2025.** Diterima sebagai batasan, tidak diukur.
 - **NIK, NPWP orang pribadi, dan nomor KK berbentuk sama.** Semuanya dilaporkan sebagai `nik`. Diterima karena yang penting terdeteksi sebagai PII.
 - **Email di luar daftar domain pribadi** (termasuk `example.com` dan alamat SSH) diberi tingkat `low`, jadi tidak dilaporkan pada ambang bawaan. Data uji email positif memakai domain di dalam daftar agar label konsisten.
-- **`--json` tanpa `--output`** belum ditentukan perilakunya.
+- **`--json` tanpa `--output`** (dan sebaliknya): diputuskan 26 Nov. 2026, ditolak dengan exit code 2. Alasan: stdout sudah dipakai log teks, jadi JSON ke stdout akan bercampur, dan membuat berkas diam-diam di CI mengejutkan.
 - **Kandidat `medium` yang dibuang pada `--min-level high`** tidak terhitung di ringkasan (hanya `low` yang terhitung). Diputuskan 26 Nov. 2026 tetap seperti rumusan KF-15, dengan tes.
-- **Urutan temuan di log** belum ditentukan secara tegas.
+- **Urutan temuan di log**: diputuskan 26 Nov. 2026 berkas, baris, kolom, dengan tes keterulangan.
 - **Keutuhan data wilayah di produksi.** Pemeriksaan sekarang hanya menangkap berkas hilang, kosong, atau berbentuk salah. Berkas yang terpotong atau lama tetap lolos. Pilihan penguat (belum dipilih): (a) simpan jumlah minimum kode di kode (provinsi ≥ 38, kecamatan ≥ 7.000), (b) simpan SHA-256 tiap CSV dan tolak bila berbeda (aman, tapi tiap pembaruan data harus mengubah dua tempat), (c) tidak menambah apa pun dan dicatat sebagai batasan. Usulan: (b) bila ada waktu, jika tidak (c). Dengan (c), akibat terburuknya `high` turun jadi `medium` (masih dilaporkan), bukan hilang.
 - **PRISM belum bisa dipasang sebagai paket** (`pip install`). Tidak ada `pyproject.toml` dan pengaturan *package data*, jadi yang tersedia hanya menjalankan dari checkout atau menyalin seluruh `src/prism/`. Di luar lingkup MVP, ditulis di jurnal sebagai batasan.
 - **Batas 1 MB** untuk berkas belum diuji.
@@ -1176,6 +1177,8 @@ Memenuhi: KF-14, KF-15, KF-16.
 - Cek berhasil: tes lulus.
 
 **Langkah 9. Laporan dan exit code final** (±75 menit)
+
+**Status: selesai 26 Nov. 2026.** `report.py` (baris temuan, ringkasan, `buat_json`, `tulis_json`, urutan), `cli.py` (`--json`, `--output`, keluaran sesuai 3.2.2), `scanner.py` (format pesan error); tes: `tests/test_laporan.py` (baru), tambahan di `test_report.py`, penyesuaian `test_cli.py` (296 tes hijau seluruhnya). **Gerbang 2 tercapai:** `prism scan .` pada folder campuran memberi log yang benar dan aman. Keputusan: (1) `--json` dan `--output` wajib bersama, salah satu saja ditolak (exit 2); (2) urutan temuan berkas, baris, kolom; (3) JSON tetap ditulis pada exit 0, 1, dan 2, termasuk error sebelum pindai (`errors` = 1); bila JSON gagal ditulis, PRISM keluar dengan 2 dan pesan jelas; (4) baris `ERROR <berkas>: <sebab>` dicetak ke stdout sebelum baris temuan, sedangkan error sebelum pindai (path salah, data referensi rusak, opsi salah) tetap ke stderr dan tanpa keluaran stdout; (5) ringkasan teks mengikuti 3.2.2 dan tidak lagi memuat jumlah baris. Angka itu pindah ke JSON (`lines`, `lines_prefiltered`), jadi keputusan langkah 4 (ringkasan lima angka) berlaku di JSON, bukan di log; (6) JSON ditambah `lines_prefiltered` dan `findings_by_rule` (KF-19: temuan per jenis) di luar contoh awal. Dibuktikan lewat tes: nilai utuh tidak muncul di stdout, stderr, JSON, dan pesan error baca; tiga exit code dan error yang didahulukan; keterulangan (dua kali jalan identik); kode tidak mengimpor modul jaringan (periksa lewat `ast`, bukan pencarian teks). **Batasan yang ditemukan:** path berkas dicetak apa adanya di lokasi temuan dan di pesan error, jadi nama berkas yang memuat PII (misalnya `3171011503900001.txt`) akan tercetak utuh. PRISM tidak memindai nama berkas, dan path tidak di-mask. Belum diputuskan, perlu ditinjau di langkah 13 atau dicatat sebagai batasan di jurnal. Belum dikerjakan: rujukan untuk metode mask di `referensi.md` (butuh riset dengan sumber yang dibaca langsung, bukan dikarang).
 
 Memenuhi: KF-17, KF-18, KF-19, KF-20, KF-21.
 - Kerjakan di `report.py` dan `cli.py`:
