@@ -1,0 +1,20 @@
+# Domain penyedia email pribadi (KF-13). Satu domain per baris, huruf kecil.
+# Baris kosong dan baris berawalan # diabaikan.
+#
+# Alamat dengan domain di daftar ini berstatus `medium`, selainnya `low`.
+# ⚠️ Daftar disusun sendiri dan tidak bersumber. Nilainya hipotesis (diuji di langkah 13).
+# Menambah atau menghapus domain cukup dengan mengubah berkas ini, tanpa mengubah kode.
+# Subdomain (misalnya mail.gmail.com) tidak dianggap sama dengan domain induknya.
+gmail.com
+googlemail.com
+yahoo.com
+yahoo.co.id
+ymail.com
+outlook.com
+hotmail.com
+live.com
+msn.com
+icloud.com
+me.com
+proton.me
+protonmail.com

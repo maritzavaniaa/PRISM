@@ -1,4 +1,4 @@
-"""Antarmuka baris perintah PRISM (langkah 5: temuan NIK dan exit code).
+"""Antarmuka baris perintah PRISM (temuan NIK, HP, email dan exit code).
 
 Exit code (KF-21): 2 bila ada error pindai (didahulukan), jika tidak 1 bila ada
 temuan, jika tidak 0.
@@ -8,7 +8,7 @@ import argparse
 import os
 import sys
 
-from prism import wilayah
+from prism import domain_email, wilayah
 from prism.engine import periksa_baris
 from prism.report import mask
 from prism.rules import RULES
@@ -43,13 +43,17 @@ def _scan(path: str, exclude) -> int:
         print(f"Error: path tidak ditemukan: {path}", file=sys.stderr)
         return EXIT_ERROR
 
-    # Data wilayah dimuat di awal. Bila hilang, keluar dengan 2: crash Python berkode 1
-    # akan terbaca sebagai "ada temuan".
-    try:
-        wilayah.pastikan_termuat()
-    except (OSError, ValueError) as e:
-        print(f"Error: data kode wilayah tidak bisa dimuat: {e}", file=sys.stderr)
-        return EXIT_ERROR
+    # Data referensi dimuat di awal. Bila hilang atau rusak, keluar dengan 2: crash Python
+    # berkode 1 akan terbaca sebagai "ada temuan".
+    for nama, muat in (
+        ("kode wilayah", wilayah.pastikan_termuat),
+        ("domain email pribadi", domain_email.pastikan_termuat),
+    ):
+        try:
+            muat()
+        except (OSError, ValueError) as e:
+            print(f"Error: data {nama} tidak bisa dimuat: {e}", file=sys.stderr)
+            return EXIT_ERROR
 
     temuan = []
 

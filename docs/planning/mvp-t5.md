@@ -1038,6 +1038,7 @@ PRISM/
 │   ├── rules.py           # isi rule NIK, HP, email: regex, fungsi assess, kata konteks
 │   ├── engine.py          # menjalankan rule: regex, memanggil assess, konteks, ambang, dedup
 │   ├── wilayah.py         # memuat kode provinsi dan kecamatan dari CSV (langkah 6)
+│   ├── domain_email.py    # memuat daftar domain email pribadi dari berkas data (langkah 7)
 │   └── report.py          # mask, teks, JSON
 ├── tests/                 # test_rules.py, test_engine.py, test_report.py, test_cli.py
 ├── data/synthetic/        # data uji sintetis
@@ -1145,6 +1146,8 @@ Memenuhi: KF-11.
 - Catatan: daftar kecamatan dimuat sekali per pindai, bukan per baris.
 
 **Langkah 7. Tambah rule HP dan email** (±75 menit)
+
+**Status: selesai 26 Nov. 2026.** `rules.py` (HP dan email), `domain_email.py` (baru), `data/domain-email-pribadi.txt` (baru, 13 domain), `cli.py` dan `report.py` diperbarui; tes: `test_hp.py`, `test_email.py` (baru) dan tambahan di `test_cli.py` (200 tes hijau seluruhnya). Keputusan yang ditetapkan: (1) batas panjang HP tetap 9–12 digit dari angka 8 (hipotesis ⚠️); (2) `81234567890` polos tetap pilihan (a): `low`, tidak dilaporkan tanpa konteks; (3) daftar domain ada di `src/prism/data/domain-email-pribadi.txt`, dimuat sekali dan dicek di awal pindai (hilang atau rusak: exit 2, sama seperti data wilayah); (4) `62` berpemisah (`62 812-3456-7890`) tidak ada di tabel KF-12, dinilai `high` seperti `0` berpemisah (perluasan penyusun ⚠️, alasan sama: pemisah jarang muncul kebetulan); (5) tanpa awalan, berpemisah, tetapi bukan pola 3-4-4 (`81-2345-6789`) dinilai `low`; (6) `mask()` email (bagian sebelum `@` jadi `*`) dikerjakan sekarang, bukan di langkah 9, karena email sudah dilaporkan. Batasan yang diterima: NIK berpemisah tidak terdeteksi sebagai NIK, tetapi kelompok di dalamnya yang berawalan `08` bisa cocok sebagai HP berpemisah (`3171-0815-0390-0001` memberi kandidat `0815-0390-0001`); batas kanan HP hanya menolak digit yang menempel (`0812-3456-7890-1234` memberi kandidat `0812-3456-7890`); local-part dan domain Unicode tidak didukung; subdomain (`mail.gmail.com`) tidak dianggap `gmail.com`.
 
 Memenuhi: KF-08, KF-09, KF-12, KF-13.
 - Kerjakan:

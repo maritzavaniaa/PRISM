@@ -220,3 +220,33 @@ def test_data_wilayah_hilang_exit_2_bukan_1(tmp_path, monkeypatch, capsys):
     assert kode == 2
     assert "data kode wilayah" in keluar.err
     assert keluar.out == ""
+
+
+# --- langkah 7: HP dan email end-to-end ---
+
+
+def test_satu_berkas_berisi_nik_hp_dan_email(tmp_path):
+    berkas = tmp_path / "campuran.txt"
+    berkas.write_text(
+        "nik: 3171011503900001\n"
+        "hp: +62 812-3456-7890\n"
+        "hp: 081234567890\n"
+        "hp: 81234567890\n"
+        "email: budi@gmail.com\n"
+        "repo: git@github.com:user/repo.git\n",
+        encoding="utf-8",
+    )
+
+    hasil = run_prism("scan", str(berkas))
+
+    assert hasil.returncode == 1
+    assert f"{berkas}:1:6  nik  high  ************0001" in hasil.stdout
+    assert f"{berkas}:2:5  hp  high  *************7890" in hasil.stdout
+    assert f"{berkas}:3:5  hp  medium  ********7890" in hasil.stdout
+    assert f"{berkas}:4:5  hp  low  *******7890" in hasil.stdout
+    assert f"{berkas}:5:8  email  medium  ****@gmail.com" in hasil.stdout
+    assert f"{berkas}:6:7  email  low  ***@github.com" in hasil.stdout
+    assert "Temuan: 6" in hasil.stdout
+    for utuh in ("3171011503900001", "081234567890", "budi@", "812-3456-7890"):
+        assert utuh not in hasil.stdout
+        assert utuh not in hasil.stderr
