@@ -1,0 +1,9 @@
+2026-11-25 08:14:02 INFO  antrian dibuka loket=3
+2026-11-25 08:15:31 INFO  validasi nik=3273012503870000 hasil=ok
+2026-11-25 08:16:10 WARN  referensi tidak dikenal ref=9876543210987654
+2026-11-25 08:17:44 INFO  kirim notifikasi wa ke 81355501236 sukses
+2026-11-25 08:18:02 INFO  kirim email ke slamet.uji.riyadi@gmail.com
+2026-11-25 08:19:20 INFO  session=550e8400-e29b-41d4-a716-446655440000 dibuat
+2026-11-25 08:20:00 INFO  epoch_ms=1764058800000 diterima
+2026-11-25 08:21:30 INFO  rekening tujuan 8201234567 atas nama Budi
+2026-11-25 08:22:41 ERROR gagal baca npwp 3175015503900000

@@ -25,8 +25,8 @@
 | [8](#langkah-8-konteks-ambang-dan-dedup) ✅ | Konteks, ambang, dedup | KF-14, 15, 16 | pytest tabel konteks, ambang, dedup | 75 mnt | 55% |
 | [9](#langkah-9-laporan-dan-exit-code-final) ✅ | Teks, JSON, mask, exit code | KF-17 sampai 21, KN-04 sampai 06 | pytest mask, JSON, "nilai utuh tidak muncul", exit code | 75 mnt | 63% |
 | | **Gerbang 2: MVP lokal selesai** | | | | |
-| [10](#langkah-10-data-uji-sintetis-dan-label) | `data/synthetic/` + label | KF-25 | Skrip konsistensi data | 105 mnt | 74% |
-| [11](#langkah-11-melengkapi-tes-otomatis) | `pytest` lengkap | KF-27 | Matriks KF → tes tanpa lubang | 60 mnt | 81% |
+| [10](#langkah-10-data-uji-sintetis-dan-label) ✅ | `data/synthetic/` + label | KF-25 | Skrip konsistensi data | 105 mnt | 74% |
+| [11](#langkah-11-melengkapi-tes-otomatis) ✅ | `pytest` lengkap | KF-27 | Matriks KF → tes tanpa lubang | 60 mnt | 81% |
 | | **Gerbang 3: data dan tes siap** | | | | |
 | [12](#langkah-12-workflow-nyata) | Job CI merah dan hijau | KF-22 sampai 24, KN-01, KN-08 | Pindai lokal = perintah CI, lalu run nyata | 50 mnt | 86% |
 | | **Gerbang 4: MVP CI selesai** | | | | |
@@ -53,11 +53,11 @@ Evaluasi (precision, recall, F1, FPR di langkah 13) **bukan** tes progres. Itu p
 
 ### 2.2 Aturan tes progres
 
-1. **Tes ditulis bersamaan dengan langkahnya, bukan setelah semua kode selesai.** Di mvp-t5, tes baru dilengkapi di [Langkah 11](mvp-t5.md#L1222). Terlalu telat: bug di rule NIK baru ketahuan setelah HP, laporan, dan CI dibangun di atasnya. Langkah 11 menjadi **pelengkap dan pemeriksa celah**, bukan awal penulisan tes. Dicatat sebagai  (Usulan).
+1. **Tes ditulis bersamaan dengan langkahnya, bukan setelah semua kode selesai.** Di mvp-t5, tes baru dilengkapi di [Langkah 11](mvp-t5.md#L1224). Terlalu telat: bug di rule NIK baru ketahuan setelah HP, laporan, dan CI dibangun di atasnya. Langkah 11 menjadi **pelengkap dan pemeriksa celah**, bukan awal penulisan tes. Dicatat sebagai  (Usulan).
 2. **Satu langkah selesai bila tes langkah itu hijau dan seluruh `pytest` lama tetap hijau.** Jalankan seluruhnya, bukan hanya tes baru, supaya tahu langkah baru tidak merusak yang lama.
 3. **Tes ditulis dari tabel di SRS, bukan dari keluaran kodenya.** Bila tes disalin dari apa yang dikeluarkan program, tes pasti lulus walau programnya salah.
 4. **Nilai uji sintetis boleh ditulis langsung di berkas tes** (folder `tests/` dikecualikan di CI, [KF-24](mvp-t5.md#L579)).
-5. **`pytest` hanya alat pengembangan.** Ia bukan pustaka standar. Aturan "hanya pustaka standar" berlaku untuk kode PRISM di `src/`, jadi `pytest` boleh dipasang di mesin lokal, tetapi tidak boleh di-`import` dari `src/` dan tidak dipasang di workflow ([Langkah 11](mvp-t5.md#L1222) menyebut tes dijalankan lokal).
+5. **`pytest` hanya alat pengembangan.** Ia bukan pustaka standar. Aturan "hanya pustaka standar" berlaku untuk kode PRISM di `src/`, jadi `pytest` boleh dipasang di mesin lokal, tetapi tidak boleh di-`import` dari `src/` dan tidak dipasang di workflow ([Langkah 11](mvp-t5.md#L1224) menyebut tes dijalankan lokal).
 6. **Langkah gagal = jangan lanjut.** Perbaiki dulu. Keputusan baru yang muncul dicatat di [mvp-t5.md](mvp-t5.md) pada hari yang sama (satu-satunya sumber spesifikasi).
 
 ### 2.3 Batas antara tes progres dan evaluasi
@@ -297,6 +297,8 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 #### Langkah 10. Data uji sintetis dan label
 [Langkah 10](mvp-t5.md#L1202) · ±105 mnt · kumulatif 74%
 
+**Status: ✅ selesai 26 Nov 2026.** 595 label (438 positif, 157 negatif); 36 berkas D1 (12 kalibrasi, 24 uji) dan 5 berkas D2 (47 label, semuanya `uji`); `tests/test_dataset.py` 18 tes hijau. Keputusan: bidang **layanan publik**, Faker tidak dipakai, email perusahaan berlabel negatif, NIK berpemisah berlabel positif (false negative yang diketahui). **PRISM belum dijalankan pada data `uji`** (aturan beku). Batasan: D1 sirkular, D2 ditulis oleh pihak yang menulis aturan. Rincian di [mvp-t5.md](mvp-t5.md).
+
 - **Kebutuhan:** [KF-25](mvp-t5.md#L585).
 - **Tes progres** (skrip pemeriksa kecil, atau `tests/test_dataset.py`):
 
@@ -314,7 +316,9 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 - Boleh dikerjakan **paralel** dengan langkah 7 sampai 9 ([B.3](mvp-t5.md#b3-ringkasan-urutan-dan-waktu)). Tapi data tetap tidak dipakai menyetel (bagian 2.3).
 
 #### Langkah 11. Melengkapi tes otomatis
-[Langkah 11](mvp-t5.md#L1222) · ±60 mnt · kumulatif 81%
+[Langkah 11](mvp-t5.md#L1224) · ±60 mnt · kumulatif 81%
+
+**Status: ✅ selesai 26 Nov 2026.** 400 tes lulus dan 3 `xfail` (menunggu langkah 12). Matriks KF → tes di [matriks-kf-tes.md](matriks-kf-tes.md) dan diperiksa `tests/test_matriks_kf.py` (KF-26 dikecualikan dengan alasan). Pengecoh: 26 nilai, 0 dilaporkan pada ambang bawaan. Lingkungan bersih (venv kosong, salinan dari `git ls-files`) hijau, dan dua kali jalan sama. **Gerbang 3 tercapai.** Saat langkah 12 selesai, hapus tanda `xfail` di `tests/test_workflow.py`.
 
 - **Kebutuhan:** [KF-27](mvp-t5.md#L587).
 - **Isi:** karena tes sudah ditulis tiap langkah, pekerjaannya **menutup lubang**, bukan menulis dari nol.
@@ -333,7 +337,7 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 ### Fase D. CI
 
 #### Langkah 12. Workflow nyata
-[Langkah 12](mvp-t5.md#L1234) · ±50 mnt · kumulatif 86%
+[Langkah 12](mvp-t5.md#L1238) · ±50 mnt · kumulatif 86%
 
 - **Kebutuhan:** [KF-22](mvp-t5.md#L577), [KF-23](mvp-t5.md#L578), [KF-24](mvp-t5.md#L579), [KN-01](mvp-t5.md#L742), [KN-08](mvp-t5.md#L749).
 - **Tes progres:**
@@ -355,7 +359,7 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 ### Fase E. Evaluasi dan dokumentasi
 
 #### Langkah 13. Evaluasi
-[Langkah 13](mvp-t5.md#L1254) · ±90 mnt · kumulatif 95%
+[Langkah 13](mvp-t5.md#L1258) · ±90 mnt · kumulatif 95%
 
 - **Kebutuhan:** [KF-26](mvp-t5.md#L586), [KN-02](mvp-t5.md#L743), [KN-03](mvp-t5.md#L744), [KN-06](mvp-t5.md#L747).
 - Rincian jadwal H1 sampai H7 ada di [skema-evaluasi.md](skema-evaluasi.md) bagian 6. Langkah ini memadatkannya.
@@ -375,7 +379,7 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 - Bila waktu mepet, urutan pemotongan di [skema-evaluasi.md](skema-evaluasi.md) bagian 6: Presidio, lalu repo publik. **Jangan** potong pembagian kalibrasi-uji, baseline, D2, dan pytest.
 
 #### Langkah 14. Dokumentasi dan demo
-[Langkah 14](mvp-t5.md#L1269) · ±45 mnt · kumulatif 100%
+[Langkah 14](mvp-t5.md#L1273) · ±45 mnt · kumulatif 100%
 
 - **Kebutuhan:** [kriteria MVP 1.3](mvp-t5.md#13-kriteria-mvp-selesai), [KN-05](mvp-t5.md#L746).
 - **Tes progres (manual):**

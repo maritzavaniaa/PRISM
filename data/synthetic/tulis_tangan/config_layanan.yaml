@@ -1,0 +1,13 @@
+layanan:
+  nama: pendaftaran-ktp
+petugas:
+  - nama: Agus Salim
+    nik: "3578010906010000"
+    hp: "+6285755502468"
+    email: agus.uji@outlook.com
+  - nama: Wulan Sari
+    nik: "3374996802980000"
+    surel: wulan.uji@yahoo.com
+kontak_darurat: 08125550100
+nomor_antrian: 0000000000000001
+webhook: https://layanan.example.id/hook/8123456789

@@ -23,6 +23,8 @@ data/private/
 
 # Keluaran scanner dan log lokal
 *.log
+# Data uji sintetis (langkah 10) memuat berkas log yang memang harus ikut repo
+!data/synthetic/**/*.log
 scan-report*.json
 scan-report*.txt
 evaluation/results/tmp/

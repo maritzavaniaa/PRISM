@@ -1,0 +1,68 @@
+{
+  "seed": 20261126,
+  "semua": {
+    "total": 595,
+    "positif": 438,
+    "negatif": 157
+  },
+  "per_split": {
+    "kalibrasi": {
+      "total": 188,
+      "positif": 140,
+      "negatif": 48
+    },
+    "uji": {
+      "total": 407,
+      "positif": 298,
+      "negatif": 109
+    }
+  },
+  "per_jenis": {
+    "nik": {
+      "total": 250,
+      "positif": 192,
+      "negatif": 58
+    },
+    "hp": {
+      "total": 216,
+      "positif": 155,
+      "negatif": 61
+    },
+    "email": {
+      "total": 129,
+      "positif": 91,
+      "negatif": 38
+    }
+  },
+  "per_asal_sampel": {
+    "acak16": 20,
+    "acak16_kata_nik": 1,
+    "bulan_salah": 14,
+    "email": 91,
+    "email_perusahaan": 38,
+    "hp": 101,
+    "hp_tanpa_awalan": 54,
+    "id_transaksi": 16,
+    "id_url": 1,
+    "kk": 20,
+    "nik": 153,
+    "nik_berpemisah": 3,
+    "nik_dua_sekaligus": 1,
+    "npwp_op": 15,
+    "rekening": 17,
+    "timestamp": 35,
+    "timestamp_20digit": 1,
+    "uuid": 14
+  },
+  "per_jenis_berkas": {
+    "csv": 222,
+    "kode": 90,
+    "log": 93,
+    "md": 95,
+    "yaml": 95
+  },
+  "berkas_per_split": {
+    "kalibrasi": 12,
+    "uji": 24
+  }
+}
