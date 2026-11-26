@@ -24,6 +24,18 @@ def mask(nilai: str) -> str:
     return "*" * (len(nilai) - JUMLAH_TERLIHAT) + nilai[-JUMLAH_TERLIHAT:]
 
 
+def samarkan_rentang(teks: str, rentang) -> str:
+    """Ganti tiap rentang (awal, akhir) di `teks` dengan hasil mask() atasnya. Panjang teks tetap."""
+    hasil = []
+    sebelumnya = 0
+    for awal, akhir in rentang:
+        hasil.append(teks[sebelumnya:awal])
+        hasil.append(mask(teks[awal:akhir]))
+        sebelumnya = akhir
+    hasil.append(teks[sebelumnya:])
+    return "".join(hasil)
+
+
 def urutkan_temuan(temuan) -> list:
     """Urutan tetap supaya dua kali jalan memberi keluaran sama: berkas, baris, lalu kolom (KN-06)."""
     return sorted(temuan, key=lambda t: (t.berkas, t.baris, t.kolom))
@@ -70,7 +82,12 @@ def buat_json(temuan, rules, ringkasan: dict) -> dict:
             {
                 "rule_id": t.rule_id,
                 "level": t.tingkat,
-                "location": {"file": t.berkas, "line": t.baris, "column": t.kolom},
+                "location": {
+                    "file": t.berkas,
+                    "line": t.baris,
+                    "column": t.kolom,
+                    "target": "name" if t.baris == 0 else "content",
+                },
                 "match": {"value": mask(t.nilai)},
             }
             for t in temuan

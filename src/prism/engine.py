@@ -122,3 +122,24 @@ def hapus_duplikat(temuan, rules) -> list:
         if all(akhir <= x.kolom or awal >= x.kolom + len(x.nilai) for x in terpilih):
             terpilih.append(t)
     return sorted(terpilih, key=lambda t: t.kolom)
+
+
+def rentang_sensitif(teks: str, rules, min_level: str) -> list:
+    """Rentang [awal, akhir) di `teks` yang memuat kandidat bertingkat >= min_level, digabung bila beririsan.
+
+    Dipakai untuk menyamarkan path sebelum dicetak: apa pun yang bisa dilaporkan sebagai temuan
+    tidak boleh tampil utuh di tempat lain. Tingkat dihitung seperti temuan biasa (bukti dan konteks).
+    """
+    batas = URUTAN_TINGKAT[min_level]
+    rentang = sorted(
+        (t.kolom - 1, t.kolom - 1 + len(t.nilai))
+        for t in periksa_baris("", 0, teks, rules)
+        if URUTAN_TINGKAT[t.tingkat] >= batas
+    )
+    gabungan = []
+    for awal, akhir in rentang:
+        if gabungan and awal < gabungan[-1][1]:
+            gabungan[-1] = (gabungan[-1][0], max(gabungan[-1][1], akhir))
+        else:
+            gabungan.append((awal, akhir))
+    return gabungan

@@ -107,7 +107,7 @@ def test_buat_json_struktur_dan_urutan_kunci():
         {
             "rule_id": "nik",
             "level": "high",
-            "location": {"file": "app/seed.csv", "line": 12, "column": 34},
+            "location": {"file": "app/seed.csv", "line": 12, "column": 34, "target": "content"},
             "match": {"value": "************0001"},
         }
     ]

@@ -77,7 +77,15 @@ def _alasan_dilewati(path: str) -> str | None:
     return None
 
 
-def _periksa_berkas(path: str, hasil: ScanResult, proses_baris, proses_header=None) -> None:
+def _kirim_nama(path: str, nama: str, proses_nama) -> None:
+    """Teruskan nama berkas atau folder ke penerima bila lolos prefilter yang sama dengan isi berkas."""
+    if proses_nama is not None and lolos_prefilter(nama):
+        proses_nama(path, nama)
+
+
+def _periksa_berkas(path: str, hasil: ScanResult, proses_baris, proses_header=None, proses_nama=None) -> None:
+    # Nama dipindai walau isinya akan dilewati: KTP_<nik>.jpg dilewati sebagai biner, namanya tidak.
+    _kirim_nama(path, os.path.basename(path), proses_nama)
     try:
         if _alasan_dilewati(path) is not None:
             hasil.berkas_dilewati += 1
@@ -113,17 +121,19 @@ def _folder_dikecualikan(root: str, exclude) -> set:
     return hasil
 
 
-def scan(path: str, exclude=(), proses_baris=None, proses_header=None) -> ScanResult:
+def scan(path: str, exclude=(), proses_baris=None, proses_header=None, proses_nama=None) -> ScanResult:
     """Pindai satu berkas atau satu folder.
 
     proses_baris(path, nomor_baris, teks) dipanggil untuk tiap baris yang lolos
     prefilter. proses_header(path, teks) dipanggil untuk baris pertama berkas .csv dan .tsv,
-    tanpa prefilter. Urutan penelusuran diurutkan abjad supaya hasil bisa diulang (KN-06).
+    tanpa prefilter. proses_nama(path, nama) dipanggil untuk nama tiap berkas dan folder yang
+    ditemui (yang lolos prefilter), termasuk berkas yang isinya dilewati. Nama folder yang
+    dikecualikan atau .git, dan folder akar yang dipindai, tidak dikirim. Urutan penelusuran diurutkan abjad supaya hasil bisa diulang (KN-06).
     """
     hasil = ScanResult()
 
     if not os.path.isdir(path):
-        _periksa_berkas(path, hasil, proses_baris, proses_header)
+        _periksa_berkas(path, hasil, proses_baris, proses_header, proses_nama)
         return hasil
 
     dikecualikan = _folder_dikecualikan(path, exclude)
@@ -140,14 +150,16 @@ def scan(path: str, exclude=(), proses_baris=None, proses_header=None) -> ScanRe
         for nama in dirnames:
             sub = os.path.join(dirpath, nama)
             if os.path.islink(sub):
-                hasil.berkas_dilewati += 1  # symlink folder tidak diikuti
+                hasil.berkas_dilewati += 1  # symlink folder tidak diikuti, tetapi namanya tetap dipindai
+                _kirim_nama(sub, nama, proses_nama)
             elif nama == FOLDER_SELALU_DILEWATI or os.path.abspath(sub) in dikecualikan:
                 hasil.berkas_dilewati += _hitung_berkas(sub)
             else:
+                _kirim_nama(sub, nama, proses_nama)
                 tersisa.append(nama)
         dirnames[:] = tersisa  # os.walk tidak masuk ke folder yang dibuang dari daftar
 
         for nama in filenames:
-            _periksa_berkas(os.path.join(dirpath, nama), hasil, proses_baris, proses_header)
+            _periksa_berkas(os.path.join(dirpath, nama), hasil, proses_baris, proses_header, proses_nama)
 
     return hasil

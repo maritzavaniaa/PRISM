@@ -51,7 +51,7 @@ def test_json_ditulis_dengan_struktur_lengkap(tmp_path, laporan_di):
     for f in laporan["findings"]:
         assert set(f) == {"rule_id", "level", "location", "match"}
         assert f["level"] in ("high", "medium", "low") and "score" not in f
-        assert set(f["location"]) == {"file", "line", "column"}
+        assert set(f["location"]) == {"file", "line", "column", "target"}
         assert set(f["match"]) == {"value"}
     assert laporan["scan"]["mode"] == "repo"
     assert laporan["scan"]["findings"] == 4

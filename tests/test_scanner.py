@@ -308,3 +308,77 @@ def test_header_tidak_dihitung_sebagai_baris_lolos_prefilter(tmp_path):
 
     assert hasil.baris_dibaca == 2
     assert hasil.baris_lolos_prefilter == 1
+
+
+# --- perluasan: nama berkas dan folder dipindai ---
+
+
+def kumpulkan_nama(path, **kw):
+    nama = []
+    scan(str(path), proses_nama=lambda p, n: nama.append((os.path.relpath(p, path), n)), **kw)
+    return nama
+
+
+NIK_NAMA = "3171011503900001"
+
+
+def test_nama_berkas_dan_folder_dengan_digit_diteruskan(tmp_path):
+    tulis(tmp_path / f"KTP_{NIK_NAMA}.txt")
+    tulis(tmp_path / f"{NIK_NAMA}" / "isi.txt")
+    tulis(tmp_path / "biasa.txt")
+
+    nama = kumpulkan_nama(tmp_path)
+
+    assert sorted(nama) == sorted(
+        [(f"KTP_{NIK_NAMA}.txt", f"KTP_{NIK_NAMA}.txt"), (NIK_NAMA, NIK_NAMA)]
+    )  # "biasa.txt" dan "isi.txt" tidak lolos prefilter
+
+
+def test_nama_berkas_biner_dan_terlalu_besar_tetap_dipindai(tmp_path):
+    (tmp_path / f"KTP_{NIK_NAMA}.jpg").write_bytes(b"\x00\x01")
+    (tmp_path / f"besar_{NIK_NAMA}.txt").write_bytes(b"x" * (BATAS_UKURAN_BYTE + 1))
+
+    hasil = scan(str(tmp_path), proses_nama=lambda p, n: None)
+    nama = kumpulkan_nama(tmp_path)
+
+    assert hasil.berkas_dilewati == 2  # isinya dilewati
+    assert sorted(n for _, n in nama) == [f"KTP_{NIK_NAMA}.jpg", f"besar_{NIK_NAMA}.txt"]
+
+
+def test_nama_folder_akar_tidak_dikirim_tetapi_berkas_tunggal_dikirim(tmp_path):
+    akar = tmp_path / NIK_NAMA
+    tulis(akar / "a.txt")
+
+    assert kumpulkan_nama(akar) == []  # nama akar dipilih pengguna sendiri
+
+    berkas = tulis(tmp_path / f"{NIK_NAMA}.txt")
+    nama = []
+    scan(str(berkas), proses_nama=lambda p, n: nama.append(n))
+    assert nama == [f"{NIK_NAMA}.txt"]
+
+
+def test_nama_folder_yang_dikecualikan_dan_git_tidak_dikirim(tmp_path):
+    tulis(tmp_path / f"kecuali_{NIK_NAMA}" / "a.txt")
+    tulis(tmp_path / ".git" / f"{NIK_NAMA}")
+    tulis(tmp_path / f"ikut_{NIK_NAMA}" / "a.txt")
+
+    nama = kumpulkan_nama(tmp_path, exclude=[f"kecuali_{NIK_NAMA}"])
+
+    assert [n for _, n in nama] == [f"ikut_{NIK_NAMA}"]
+
+
+@pytest.mark.skipif(os.name == "nt", reason="symlink di POSIX")
+def test_nama_symlink_folder_tetap_dipindai_walau_tidak_diikuti(tmp_path):
+    tulis(tmp_path / "asli" / "a.txt")
+    os.symlink(tmp_path / "asli", tmp_path / f"tautan_{NIK_NAMA}")
+
+    assert [n for _, n in kumpulkan_nama(tmp_path)] == [f"tautan_{NIK_NAMA}"]
+
+
+def test_nama_tidak_dihitung_sebagai_baris(tmp_path):
+    tulis(tmp_path / f"{NIK_NAMA}.txt", "satu\n")
+
+    hasil = scan(str(tmp_path), proses_nama=lambda p, n: None)
+
+    assert hasil.baris_dibaca == 1
+    assert hasil.baris_lolos_prefilter == 0
