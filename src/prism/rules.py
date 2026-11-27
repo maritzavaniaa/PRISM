@@ -29,7 +29,7 @@ class Rule:
 
 # NIK: tepat 16 digit berurutan yang tidak diapit digit lain (KF-07).
 # (?<!\d) dan (?!\d) hanya melihat DIGIT. Huruf di depan atau di belakang tidak
-# menghalangi: "abc3171011503900001" tetap kandidat. NIK yang ditulis dengan spasi
+# menghalangi: "abc" + 16 digit NIK tetap kandidat. NIK yang ditulis dengan spasi
 # atau strip tidak terdeteksi (batasan yang diterima, mvp-t5 5.2).
 # re.ASCII: \d hanya 0-9. Tanpa itu \d juga cocok dengan digit Unicode (misalnya Arab-Indic).
 POLA_NIK = re.compile(r"(?<!\d)\d{16}(?!\d)", re.ASCII)
@@ -94,14 +94,14 @@ PEMISAH_HP = " .-"
 # dihitung dari angka 8. Pemisah (spasi, titik, strip) boleh ada di antara digit.
 # Digit kedua 1-9 menurut Permenkominfo 14/2018. Panjang 9-12 digit dari metadata
 # komunitas (libphonenumber) ⚠️ hipotesis. Batas bukan-digit di kiri dan kanan.
-# Batas kanan hanya menolak digit yang LANGSUNG menempel: "0812-3456-7890-1234" tetap
-# menghasilkan kandidat "0812-3456-7890" (batasan yang diterima).
+# Batas kanan hanya menolak digit yang LANGSUNG menempel: "08xx-xxxx-xxxx-1234" (empat blok)
+# tetap menghasilkan kandidat tiga blok pertama (batasan yang diterima).
 POLA_HP = re.compile(
     r"(?<!\d)(?:(?:\+62|62|0)[ .-]?)?8[ .-]?[1-9](?:[ .-]?\d){7,10}(?!\d)",
     re.ASCII,
 )
 
-# Tanpa awalan, pola tampilan 3-4-4: 812-3456-7890.
+# Tanpa awalan, pola tampilan 3-4-4: 8xx-xxxx-xxxx.
 POLA_HP_344 = re.compile(r"8\d\d[ .-]\d{4}[ .-]\d{4}", re.ASCII)
 
 
@@ -110,9 +110,9 @@ def assess_hp(nilai: str) -> str:
 
     high   : berawalan +62, atau berawalan 0 atau 62 dengan pemisah
     medium : berawalan 08 atau 62 berupa digit polos, atau tanpa awalan berpola 3-4-4
-    low    : tanpa awalan selain itu (misalnya 81234567890 polos)
+    low    : tanpa awalan selain itu (misalnya 11 digit polos berawalan 8)
 
-    62 berpemisah (62 812-3456-7890) tidak ada di tabel KF-12. Diperlakukan sama dengan
+    62 berpemisah (62 diikuti pola 3-4-4) tidak ada di tabel KF-12. Diperlakukan sama dengan
     0 berpemisah: alasannya sama (pemisah jarang muncul kebetulan) ⚠️ perluasan penyusun.
     """
     if nilai.startswith("+62"):

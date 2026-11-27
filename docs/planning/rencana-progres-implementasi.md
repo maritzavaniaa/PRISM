@@ -359,7 +359,7 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 ### Fase E. Evaluasi dan dokumentasi
 
 #### Langkah 13. Evaluasi
-[Langkah 13](mvp-t5.md#L1258) · ±90 mnt · kumulatif 95%
+[Langkah 13](mvp-t5.md#L1260) · ±90 mnt · kumulatif 95%
 
 - **Kebutuhan:** [KF-26](mvp-t5.md#L586), [KN-02](mvp-t5.md#L743), [KN-03](mvp-t5.md#L744), [KN-06](mvp-t5.md#L747).
 - Rincian jadwal H1 sampai H7 ada di [skema-evaluasi.md](skema-evaluasi.md) bagian 6. Langkah ini memadatkannya.
@@ -379,7 +379,7 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 - Bila waktu mepet, urutan pemotongan di [skema-evaluasi.md](skema-evaluasi.md) bagian 6: Presidio, lalu repo publik. **Jangan** potong pembagian kalibrasi-uji, baseline, D2, dan pytest.
 
 #### Langkah 14. Dokumentasi dan demo
-[Langkah 14](mvp-t5.md#L1273) · ±45 mnt · kumulatif 100%
+[Langkah 14](mvp-t5.md#L1275) · ±45 mnt · kumulatif 100%
 
 - **Kebutuhan:** [kriteria MVP 1.3](mvp-t5.md#13-kriteria-mvp-selesai), [KN-05](mvp-t5.md#L746).
 - **Tes progres (manual):**
