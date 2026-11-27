@@ -1,5 +1,7 @@
-# Langkah 2 (belajar pipeline): job sengaja merah dulu, lalu hijau.
-# Akan diganti dengan workflow pindai nyata di Langkah 12.
+# Langkah 12: pindai PII di repo ini pada setiap push dan pull request.
+# Job merah bila PRISM keluar dengan kode 1 (ada temuan) atau 2 (error). Kode keluar tidak ditelan.
+# Folder yang dikecualikan: data uji sintetis, tes, hasil evaluasi, dan docs (isinya contoh sengaja).
+# JSON diunggah di setiap run (if: always) supaya ada juga saat job merah.
 name: privacy-scan
 
 on: [push, pull_request]
@@ -9,5 +11,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Uji hijau (exit 0)
-        run: exit 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13" # sama dengan lokal (KN-08)
+      - name: Pindai PII
+        run: >-
+          PYTHONPATH=src python -m prism scan .
+          --exclude data/synthetic --exclude tests
+          --exclude evaluation/results --exclude docs
+          --json --output prism-report.json
+      - name: Unggah laporan JSON
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: prism-report
+          path: prism-report.json
