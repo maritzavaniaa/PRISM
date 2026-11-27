@@ -28,7 +28,7 @@
 | [10](#langkah-10-data-uji-sintetis-dan-label) ✅ | `data/synthetic/` + label | KF-25 | Skrip konsistensi data | 105 mnt | 74% |
 | [11](#langkah-11-melengkapi-tes-otomatis) ✅ | `pytest` lengkap | KF-27 | Matriks KF → tes tanpa lubang | 60 mnt | 81% |
 | | **Gerbang 3: data dan tes siap** | | | | |
-| [12](#langkah-12-workflow-nyata) | Job CI merah dan hijau | KF-22 sampai 24, KN-01, KN-08 | Pindai lokal = perintah CI, lalu run nyata | 50 mnt | 86% |
+| [12](#langkah-12-workflow-nyata) ✅ | Job CI merah dan hijau | KF-22 sampai 24, KN-01, KN-08 | Pindai lokal = perintah CI, lalu run nyata | 50 mnt | 86% |
 | | **Gerbang 4: MVP CI selesai** | | | | |
 | [13](#langkah-13-evaluasi) | Angka evaluasi | KF-26, KN-02, 03, 06 | Tes `evaluate.py` + ulang dua kali | 90 mnt | 95% |
 | [14](#langkah-14-dokumentasi-dan-demo) | README dan bukti | Kriteria MVP [1.3](mvp-t5.md#13-kriteria-mvp-selesai) | Orang lain menjalankan dari README | 45 mnt | 100% |
@@ -318,7 +318,7 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 #### Langkah 11. Melengkapi tes otomatis
 [Langkah 11](mvp-t5.md#L1224) · ±60 mnt · kumulatif 81%
 
-**Status: ✅ selesai 26 Nov 2026.** 400 tes lulus dan 3 `xfail` (menunggu langkah 12). Matriks KF → tes di [matriks-kf-tes.md](matriks-kf-tes.md) dan diperiksa `tests/test_matriks_kf.py` (KF-26 dikecualikan dengan alasan). Pengecoh: 26 nilai, 0 dilaporkan pada ambang bawaan. Lingkungan bersih (venv kosong, salinan dari `git ls-files`) hijau, dan dua kali jalan sama. **Gerbang 3 tercapai.** Saat langkah 12 selesai, hapus tanda `xfail` di `tests/test_workflow.py`.
+**Status: ✅ selesai 26 Nov 2026.** 400 tes lulus dan 3 `xfail` (dihapus di langkah 12). Matriks KF → tes di [matriks-kf-tes.md](matriks-kf-tes.md) dan diperiksa `tests/test_matriks_kf.py` (KF-26 dikecualikan dengan alasan). Pengecoh: 26 nilai, 0 dilaporkan pada ambang bawaan. Lingkungan bersih (venv kosong, salinan dari `git ls-files`) hijau, dan dua kali jalan sama. **Gerbang 3 tercapai.** Saat langkah 12 selesai, hapus tanda `xfail` di `tests/test_workflow.py`.
 
 - **Kebutuhan:** [KF-27](mvp-t5.md#L587).
 - **Isi:** karena tes sudah ditulis tiap langkah, pekerjaannya **menutup lubang**, bukan menulis dari nol.
@@ -338,6 +338,8 @@ Format tiap langkah: **Kebutuhan** (KF/KN), **Tes progres**, **Selesai bila**, *
 
 #### Langkah 12. Workflow nyata
 [Langkah 12](mvp-t5.md#L1238) · ±50 mnt · kumulatif 86%
+
+**Status: ✅ selesai 27 Nov 2026.** 403 tes lulus, 0 `xfail`. Workflow `privacy-scan.yml` nyata: hijau pada berkas bersih, merah pada cabang berNIK (lokasi tampil, nilai ter-mask, artifact JSON ada), hijau lagi setelah dihapus. Tambahan di luar spesifikasi awal: `--exclude docs`, dan 5 komentar contoh di `rules.py` diubah karena `--exclude` hanya untuk folder. Rincian dan batasan di [mvp-t5.md](mvp-t5.md#L1238).
 
 - **Kebutuhan:** [KF-22](mvp-t5.md#L577), [KF-23](mvp-t5.md#L578), [KF-24](mvp-t5.md#L579), [KN-01](mvp-t5.md#L742), [KN-08](mvp-t5.md#L749).
 - **Tes progres:**
